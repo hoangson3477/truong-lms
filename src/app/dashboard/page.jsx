@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar'
 import StatsCard from '@/components/StatsCard'
 import Link from 'next/link'
 import LoadingPage from '@/components/Skeleton'
+import AdminStats from '@/components/AdminStats'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState(null)
@@ -154,55 +155,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ADMIN */}
-        {profile?.role === 'admin' && (
-          <>
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">📊 Thống kê tổng quan</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatsCard icon="👨‍🎓" label="Học sinh" value={data.studentCount ?? 0} color="blue" />
-              <StatsCard icon="👨‍🏫" label="Giáo viên" value={data.teacherCount ?? 0} color="green" />
-              <StatsCard icon="🏫" label="Lớp học" value={data.classCount ?? 0} color="purple" />
-              <StatsCard icon="📚" label="Môn học" value={data.subjectCount ?? 0} color="orange" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-4">⚡ Truy cập nhanh</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { icon: '🏫', label: 'Lớp học', href: '/dashboard/classes', color: 'bg-blue-500' },
-                    { icon: '👨‍🎓', label: 'Học sinh', href: '/dashboard/students', color: 'bg-green-500' },
-                    { icon: '👨‍🏫', label: 'Giáo viên', href: '/dashboard/teachers', color: 'bg-purple-500' },
-                    { icon: '🔔', label: 'Thông báo', href: '/dashboard/notifications', color: 'bg-red-500' },
-                  ].map(item => (
-                    <Link key={item.href} href={item.href}
-                      className="bg-white rounded-2xl border p-4 flex items-center gap-3 hover:shadow-md transition group">
-                      <div className={`${item.color} w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow`}>
-                        {item.icon}
-                      </div>
-                      <span className="font-medium text-gray-700 text-sm group-hover:text-blue-600">{item.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-4">🔔 Thông báo gần đây</h3>
-                <div className="space-y-3">
-                  {data.recentNotifs?.length === 0 ? (
-                    <div className="bg-white rounded-2xl border p-6 text-center text-gray-400">Chưa có thông báo</div>
-                  ) : data.recentNotifs?.map(n => (
-                    <div key={n.id} className="bg-white rounded-2xl border p-4">
-                      <p className="font-medium text-gray-800 text-sm">{n.title}</p>
-                      <p className="text-gray-400 text-xs mt-1">
-                        {new Date(n.created_at).toLocaleDateString('vi-VN')}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+        {profile?.role === 'admin' && <AdminStats />}
 
         {/* TEACHER */}
         {profile?.role === 'teacher' && (

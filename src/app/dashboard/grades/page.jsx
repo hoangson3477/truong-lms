@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import LoadingPage from '@/components/Skeleton'
+import { exportGradePDF } from '@/lib/exportPDF'
 
 const GRADE_TYPES = {
   mieng:    { label: 'Miệng',    short: 'M',  weight: 1, color: 'bg-yellow-50 text-yellow-700' },
@@ -77,6 +78,23 @@ export default function GradesPage() {
       .eq('subject_id', selectedSubject)
       .eq('semester', parseInt(selectedSemester))
     setGrades(data || [])
+  }
+
+  const handleExport = () => {
+    if (!selectedClass || !selectedSubject) {
+      return alert('Vui lòng chọn lớp và môn học!')
+    }
+    if (students.length === 0) {
+      return alert('Không có học sinh để xuất!')
+    }
+    exportGradePDF({
+      students,
+      grades,
+      className: classes.find(c => c.id === selectedClass)?.name || '',
+      subjectName: subjects.find(s => s.id === selectedSubject)?.name || '',
+      semester: selectedSemester,
+      academicYear: classes.find(c => c.id === selectedClass)?.academic_year || '',
+    })
   }
 
   // Lấy điểm của học sinh theo loại
@@ -183,11 +201,21 @@ export default function GradesPage() {
               {profile?.role === 'student' ? 'Điểm số của bạn' : 'Nhập và quản lý điểm số'}
             </p>
           </div>
-          {saved && (
-            <div className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-medium">
-              ✅ Đã lưu điểm!
-            </div>
-          )}
+          <div className="flex gap-3">
+            {saved && (
+              <div className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-medium">
+                ✅ Đã lưu điểm!
+              </div>
+            )}
+            {selectedClass && selectedSubject && students.length > 0 && (
+              <button
+                onClick={handleExport}
+                className="bg-green-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-green-700 transition flex items-center gap-2"
+              >
+                📄 Xuất PDF
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Bộ chọn */}
