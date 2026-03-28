@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
+import LoadingPage from '@/components/Skeleton'
 
 const TARGET_CONFIG = {
   all:     { label: 'Toàn trường', icon: '🏫', bg: 'bg-blue-50',   text: 'text-blue-700' },
@@ -27,7 +28,7 @@ export default function NotificationsPage() {
     const getData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       const { data: profileData } = await supabase
-        .from('profiles').select('*').eq('id', user.id).single()
+        .from('profiles').select('*').eq('id', user.id).maybeSingle()
       setProfile(profileData)
       await Promise.all([fetchNotifications(), fetchClasses()])
       setLoading(false)
@@ -97,11 +98,7 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter(n => !n.is_read).length
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Đang tải...</p>
-    </div>
-  )
+  if (loading) return <LoadingPage />
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

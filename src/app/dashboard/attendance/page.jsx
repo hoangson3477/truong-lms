@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
+import LoadingPage from '@/components/Skeleton'
 
 const STATUS_CONFIG = {
   present:  { label: 'Có mặt',   bg: 'bg-green-100',  text: 'text-green-700',  icon: '✅' },
@@ -28,7 +29,7 @@ export default function AttendancePage() {
     const getData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       const { data: profileData } = await supabase
-        .from('profiles').select('*').eq('id', user.id).single()
+        .from('profiles').select('*').eq('id', user.id).maybeSingle()
       setProfile(profileData)
       await fetchClasses()
       setLoading(false)
@@ -146,11 +147,7 @@ export default function AttendancePage() {
     setSaved(false)
   }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Đang tải...</p>
-    </div>
-  )
+  if (loading) return <LoadingPage />
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const menuItems = {
@@ -25,13 +26,11 @@ const menuItems = {
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
     { href: '/dashboard/assignments', icon: '📝', label: 'Bài tập' },
     { href: '/dashboard/grades', icon: '📊', label: 'Điểm số' },
-    { href: '/dashboard/attendance', icon: '✅', label: 'Điểm danh' },
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
   ],
   parent: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
     { href: '/dashboard/grades', icon: '📊', label: 'Điểm số con' },
-    { href: '/dashboard/attendance', icon: '✅', label: 'Điểm danh' },
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
   ],
 }
@@ -40,6 +39,7 @@ export default function Sidebar({ profile }) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const [mobileOpen, setMobileOpen] = useState(false)
   const items = menuItems[profile?.role] || menuItems.student
 
   const handleLogout = async () => {
@@ -61,9 +61,8 @@ export default function Sidebar({ profile }) {
     parent: 'bg-orange-100 text-orange-700',
   }
 
-  return (
-    <div className="w-64 min-h-screen bg-white shadow-lg flex flex-col">
-
+  const SidebarContent = () => (
+    <>
       {/* Logo */}
       <div className="p-6 border-b">
         <div className="flex items-center gap-3">
@@ -78,7 +77,7 @@ export default function Sidebar({ profile }) {
       {/* Profile */}
       <div className="p-4 border-b bg-gray-50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
+          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
             {profile?.full_name?.charAt(0) || '?'}
           </div>
           <div className="flex-1 min-w-0">
@@ -91,13 +90,14 @@ export default function Sidebar({ profile }) {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {items.map((item) => {
           const isActive = pathname === item.href
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition text-sm font-medium
                 ${isActive
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
@@ -111,8 +111,16 @@ export default function Sidebar({ profile }) {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t">
+      {/* Profile + Logout */}
+      <div className="p-4 border-t space-y-1">
+        <Link
+          href="/dashboard/profile"
+          onClick={() => setMobileOpen(false)}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 transition text-sm font-medium"
+        >
+          <span className="text-lg">👤</span>
+          Tài khoản
+        </Link>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition text-sm font-medium"
@@ -121,7 +129,43 @@ export default function Sidebar({ profile }) {
           Đăng xuất
         </button>
       </div>
+    </>
+  )
 
-    </div>
+  return (
+    <>
+      {/* Mobile toggle button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white rounded-xl shadow-lg border flex items-center justify-center text-gray-600 hover:bg-gray-50 transition"
+      >
+        ☰
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar */}
+      <div className={`lg:hidden fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 flex flex-col transform transition-transform duration-300
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl"
+        >
+          ✕
+        </button>
+        <SidebarContent />
+      </div>
+
+      {/* Desktop sidebar */}
+      <div className="hidden lg:flex w-64 min-h-screen bg-white shadow-lg flex-col">
+        <SidebarContent />
+      </div>
+    </>
   )
 }

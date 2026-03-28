@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
+import LoadingPage from '@/components/Skeleton'
 
 export default function ClassDetailPage() {
   const [profile, setProfile] = useState(null)
@@ -18,7 +19,7 @@ export default function ClassDetailPage() {
     const getData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       const { data: profileData } = await supabase
-        .from('profiles').select('*').eq('id', user.id).single()
+        .from('profiles').select('*').eq('id', user.id).maybeSingle()
       setProfile(profileData)
 
       // Lấy thông tin lớp
@@ -42,11 +43,7 @@ export default function ClassDetailPage() {
     getData()
   }, [id])
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Đang tải...</p>
-    </div>
-  )
+  if (loading) return <LoadingPage />
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
