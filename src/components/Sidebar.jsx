@@ -12,11 +12,13 @@ const menuItems = {
     { href: '/dashboard/students', icon: '👨‍🎓', label: 'Học sinh' },
     { href: '/dashboard/teachers', icon: '👨‍🏫', label: 'Giáo viên' },
     { href: '/dashboard/subjects', icon: '📚', label: 'Môn học' },
+    { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
   ],
   teacher: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
     { href: '/dashboard/classes', icon: '🏫', label: 'Lớp học' },
+    { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/assignments', icon: '📝', label: 'Bài tập' },
     { href: '/dashboard/grades', icon: '📊', label: 'Bảng điểm' },
     { href: '/dashboard/attendance', icon: '✅', label: 'Điểm danh' },
@@ -24,6 +26,7 @@ const menuItems = {
   ],
   student: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
+    { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/assignments', icon: '📝', label: 'Bài tập' },
     { href: '/dashboard/grades', icon: '📊', label: 'Điểm số' },
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
