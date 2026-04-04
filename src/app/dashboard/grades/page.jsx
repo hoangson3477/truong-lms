@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import LoadingPage from '@/components/Skeleton'
-import { exportGradePDF } from '@/lib/exportPDF'
+import { exportGradePDF, exportStudentGradePDF } from '@/lib/exportPDF'
 
 const GRADE_TYPES = {
   mieng:    { label: 'Miệng',    short: 'M',  weight: 1, color: 'bg-yellow-50 text-yellow-700' },
@@ -93,6 +93,24 @@ export default function GradesPage() {
       className: classes.find(c => c.id === selectedClass)?.name || '',
       subjectName: subjects.find(s => s.id === selectedSubject)?.name || '',
       semester: selectedSemester,
+      academicYear: classes.find(c => c.id === selectedClass)?.academic_year || '',
+    })
+  }
+
+  const handleExportStudent = async (student) => {
+    const { data: studentGrades } = await supabase
+      .from('grades')
+      .select(`*, subject:subjects(name)`)
+      .eq('student_id', student.id)
+      .eq('class_id', selectedClass)
+
+    exportStudentGradePDF({
+      student: {
+        full_name: student.profile?.full_name,
+        student_code: student.student_code,
+      },
+      allGrades: studentGrades || [],
+      className: classes.find(c => c.id === selectedClass)?.name || '',
       academicYear: classes.find(c => c.id === selectedClass)?.academic_year || '',
     })
   }
@@ -319,6 +337,7 @@ export default function GradesPage() {
                     ))}
                     <th className="text-center px-4 py-3 text-sm font-semibold text-gray-600 w-20">TB</th>
                     <th className="text-center px-4 py-3 text-sm font-semibold text-gray-600 w-20">Xếp loại</th>
+                    <th className="text-center px-4 py-3 text-sm font-semibold text-gray-600 w-20">PDF</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -391,6 +410,17 @@ export default function GradesPage() {
                           ) : (
                             <span className="text-gray-300">—</span>
                           )}
+                        </td>
+
+                        {/* Xuất PDF */}
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => handleExportStudent(student)}
+                            className="px-2 py-1 bg-green-50 text-green-600 rounded-lg text-xs hover:bg-green-100 transition font-medium"
+                            title="Xuất bảng điểm cá nhân"
+                          >
+                            📄
+                          </button>
                         </td>
                       </tr>
                     )

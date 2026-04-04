@@ -12,20 +12,25 @@ const menuItems = {
     { href: '/dashboard/students', icon: '👨‍🎓', label: 'Học sinh' },
     { href: '/dashboard/teachers', icon: '👨‍🏫', label: 'Giáo viên' },
     { href: '/dashboard/subjects', icon: '📚', label: 'Môn học' },
+    { href: '/dashboard/timetable', icon: '📅', label: 'Thời khóa biểu' },
     { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
+    { href: '/dashboard/chat', icon: '💬', label: 'Tin nhắn' },
   ],
   teacher: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
+    { href: '/dashboard/timetable', icon: '📅', label: 'Thời khóa biểu' },
     { href: '/dashboard/classes', icon: '🏫', label: 'Lớp học' },
     { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/assignments', icon: '📝', label: 'Bài tập' },
     { href: '/dashboard/grades', icon: '📊', label: 'Bảng điểm' },
     { href: '/dashboard/attendance', icon: '✅', label: 'Điểm danh' },
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
+    { href: '/dashboard/chat', icon: '💬', label: 'Tin nhắn' },
   ],
   student: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
+    { href: '/dashboard/timetable', icon: '📅', label: 'Thời khóa biểu' },
     { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/assignments', icon: '📝', label: 'Bài tập' },
     { href: '/dashboard/grades', icon: '📊', label: 'Điểm số' },
@@ -33,8 +38,11 @@ const menuItems = {
   ],
   parent: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
+    { href: '/dashboard/timetable', icon: '📅', label: 'Thời khóa biểu' },
     { href: '/dashboard/grades', icon: '📊', label: 'Điểm số con' },
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
+    // Thêm vào admin, teacher, parent:
+    { href: '/dashboard/chat', icon: '💬', label: 'Tin nhắn' },
   ],
 }
 

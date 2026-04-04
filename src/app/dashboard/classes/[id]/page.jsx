@@ -25,15 +25,15 @@ export default function ClassDetailPage() {
       // Lấy thông tin lớp
       const { data: classData } = await supabase
         .from('classes')
-        .select(`*, homeroom_teacher:profiles(full_name)`)
+        .select(`*, homeroom_teacher:profiles!classes_homeroom_teacher_id_fkey(full_name)`)
         .eq('id', id)
-        .single()
+        .maybeSingle()
       setCls(classData)
 
       // Lấy danh sách học sinh
       const { data: studentData } = await supabase
         .from('students')
-        .select(`*, profile:profiles(full_name, email)`)
+        .select(`*, profile:profiles!students_profile_id_fkey(full_name, email)`)
         .eq('class_id', id)
         .order('student_code')
       setStudents(studentData || [])

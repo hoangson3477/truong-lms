@@ -18,7 +18,7 @@ export default function LessonsPage() {
   const [uploadFile, setUploadFile] = useState(null)
   const [form, setForm] = useState({
     title: '', description: '', content: '',
-    youtube_url: '', class_id: '', subject_id: '', is_public: false
+    youtube_url: '', class_id: '', subject_id: '',
   })
   const supabase = createClient()
 
@@ -106,14 +106,13 @@ export default function LessonsPage() {
       teacher_id: profile.id,
       class_id: form.class_id || null,
       subject_id: form.subject_id || null,
-      is_public: form.is_public,
     })
 
     if (error) {
       alert('Lỗi: ' + error.message)
     } else {
       setShowModal(false)
-      setForm({ title: '', description: '', content: '', youtube_url: '', class_id: '', subject_id: '', is_public: false })
+      setForm({ title: '', description: '', content: '', youtube_url: '', class_id: '', subject_id: ''})
       setUploadFile(null)
       await fetchLessons(profile)
     }
@@ -211,7 +210,8 @@ export default function LessonsPage() {
             {filtered.map((lesson) => {
               const ytId = getYoutubeId(lesson.youtube_url)
               return (
-                <div key={lesson.id} className="bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-md transition group">
+                <Link href={`/dashboard/lessons/${lesson.id}`} key={lesson.id}>
+                <div className="bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-md transition group cursor-pointer">
 
                   {/* YouTube thumbnail */}
                   {ytId && (
@@ -237,11 +237,9 @@ export default function LessonsPage() {
                   )}
 
                   <div className="p-5">
-                    <Link href={`/dashboard/lessons/${lesson.id}`}>
-                      <h3 className="font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition line-clamp-2 cursor-pointer">
-                        {lesson.title}
-                      </h3>
-                    </Link>
+                    <h3 className="font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition line-clamp-2 cursor-pointer">
+                       {lesson.title}
+                    </h3>
 
                     {lesson.description && (
                       <p className="text-gray-500 text-sm mb-3 line-clamp-2">{lesson.description}</p>
@@ -277,12 +275,6 @@ export default function LessonsPage() {
                         👨‍🏫 {lesson.teacher?.full_name}
                       </span>
                       <div className="flex gap-2">
-                        <Link
-                          href={`/dashboard/lessons/${lesson.id}`}
-                          className="text-blue-500 text-xs hover:underline font-medium"
-                        >
-                          Xem →
-                        </Link>
                         {(profile?.role === 'admin' || lesson.teacher_id === profile?.id) && (
                           <button
                             onClick={() => handleDelete(lesson.id)}
@@ -295,6 +287,7 @@ export default function LessonsPage() {
                     </div>
                   </div>
                 </div>
+                </Link>
               )
             })}
           </div>
@@ -409,19 +402,6 @@ export default function LessonsPage() {
                 {uploadFile && (
                   <p className="text-sm text-blue-600 mt-1">✅ {uploadFile.name}</p>
                 )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="is_public"
-                  checked={form.is_public}
-                  onChange={(e) => setForm({ ...form, is_public: e.target.checked })}
-                  className="w-4 h-4 accent-blue-600"
-                />
-                <label htmlFor="is_public" className="text-sm text-gray-700">
-                  🌐 Công khai — Tất cả học sinh đều xem được (không giới hạn lớp)
-                </label>
               </div>
             </div>
 
