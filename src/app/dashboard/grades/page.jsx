@@ -4,13 +4,7 @@ import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import LoadingPage from '@/components/Skeleton'
 import { exportGradePDF, exportStudentGradePDF } from '@/lib/exportPDF'
-
-const GRADE_TYPES = {
-  mieng:    { label: 'Miệng',    short: 'M',  weight: 1, color: 'bg-yellow-50 text-yellow-700' },
-  tx:       { label: '15 phút',  short: 'TX', weight: 1, color: 'bg-blue-50 text-blue-700' },
-  giua_ky:  { label: 'Giữa kỳ', short: 'GK', weight: 2, color: 'bg-purple-50 text-purple-700' },
-  cuoi_ky:  { label: 'Cuối kỳ', short: 'CK', weight: 3, color: 'bg-red-50 text-red-700' },
-}
+import { getGradeTypes, calcAverageWithTypes, getRank, getGradeSystemLabel } from '@/lib/gradeConfig'
 
 export default function GradesPage() {
   const [profile, setProfile] = useState(null)
@@ -26,6 +20,11 @@ export default function GradesPage() {
   const [saved, setSaved] = useState(false)
   const [editingCell, setEditingCell] = useState(null)
   const [inputValue, setInputValue] = useState('')
+
+  // ✅ NEW: Hệ điểm động
+  const [gradeSystem, setGradeSystem] = useState('2_col')
+  const GRADE_TYPES = getGradeTypes(gradeSystem)
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -34,7 +33,20 @@ export default function GradesPage() {
       const { data: profileData } = await supabase
         .from('profiles').select('*').eq('id', user.id).maybeSingle()
       setProfile(profileData)
-      await Promise.all([fetchClasses(), fetchSubjects()])
+
+      // ✅ NEW: Lấy grade_system từ school
+      if (profileData?.school_id) {
+        const { data: schoolData } = await supabase
+          .from('schools')
+          .select('grade_system')
+          .eq('id', profileData.school_id)
+          .maybeSingle()
+        if (schoolData?.grade_system) {
+          setGradeSystem(schoolData.grade_system)
+        }
+      }
+
+      await Promise.all([fetchClasses(profileData), fetchSubjects()])
       setLoading(false)
     }
     getData()
@@ -48,10 +60,10 @@ export default function GradesPage() {
     if (selectedClass && selectedSubject) fetchGrades()
   }, [selectedClass, selectedSubject, selectedSemester])
 
-  const fetchClasses = async () => {
+  const fetchClasses = async (profileData = profile) => {
     let query = supabase.from('classes').select('*').order('grade')
-    if (profile?.school_id) {
-      query = query.eq('school_id', profile.school_id)
+    if (profileData?.school_id) {
+      query = query.eq('school_id', profileData.school_id)
     }
     const { data } = await query
     setClasses(data || [])
@@ -96,6 +108,7 @@ export default function GradesPage() {
     setGrades(data || [])
   }
 
+  // ✅ UPDATED: Truyền gradeTypes vào export
   const handleExport = () => {
     if (!selectedClass || !selectedSubject) {
       return alert('Vui lòng chọn lớp và môn học!')
@@ -106,6 +119,7 @@ export default function GradesPage() {
     exportGradePDF({
       students,
       grades,
+      gradeTypes: GRADE_TYPES,
       className: classes.find(c => c.id === selectedClass)?.name || '',
       subjectName: subjects.find(s => s.id === selectedSubject)?.name || '',
       semester: selectedSemester,
@@ -114,6 +128,7 @@ export default function GradesPage() {
     })
   }
 
+  // ✅ UPDATED: Truyền gradeTypes vào export cá nhân
   const handleExportStudent = async (student) => {
     const { data: studentGrades } = await supabase
       .from('grades')
@@ -127,6 +142,7 @@ export default function GradesPage() {
         student_code: student.student_code,
       },
       allGrades: studentGrades || [],
+      gradeTypes: GRADE_TYPES,
       className: classes.find(c => c.id === selectedClass)?.name || '',
       academicYear: classes.find(c => c.id === selectedClass)?.academic_year || '',
       school_id: profile?.school_id,
@@ -140,33 +156,9 @@ export default function GradesPage() {
     )
   }
 
-  // Tính điểm trung bình môn
+  // ✅ UPDATED: Tính TB dùng dynamic GRADE_TYPES
   const calcAverage = (studentId) => {
-    const scores = []
-    let totalWeight = 0
-    let totalScore = 0
-
-    Object.entries(GRADE_TYPES).forEach(([type, config]) => {
-      const grade = getGrade(studentId, type)
-      if (grade) {
-        totalScore += grade.score * config.weight
-        totalWeight += config.weight
-        scores.push(grade.score)
-      }
-    })
-
-    if (scores.length === 0) return null
-    return (totalScore / totalWeight).toFixed(1)
-  }
-
-  // Xếp loại
-  const getRank = (avg) => {
-    if (!avg) return null
-    const n = parseFloat(avg)
-    if (n >= 8.5) return { label: 'Giỏi',   color: 'text-green-600' }
-    if (n >= 7.0) return { label: 'Khá',    color: 'text-blue-600' }
-    if (n >= 5.0) return { label: 'TB',     color: 'text-yellow-600' }
-    return { label: 'Yếu', color: 'text-red-600' }
+    return calcAverageWithTypes(GRADE_TYPES, getGrade, studentId)
   }
 
   const handleCellClick = (studentId, gradeType) => {
@@ -205,7 +197,7 @@ export default function GradesPage() {
         score,
         semester: parseInt(selectedSemester),
         academic_year: academicYear,
-        school_id: profile?.school_id, // ← thêm
+        school_id: profile?.school_id,
       })
     }
 
@@ -236,6 +228,10 @@ export default function GradesPage() {
             <h2 className="text-2xl font-bold text-gray-800">📊 Bảng điểm</h2>
             <p className="text-gray-500 mt-1">
               {profile?.role === 'student' ? 'Điểm số của bạn' : 'Nhập và quản lý điểm số'}
+            </p>
+            {/* ✅ NEW: Hiển thị hệ điểm đang dùng */}
+            <p className="text-xs text-blue-600 mt-1 font-medium">
+              📋 {getGradeSystemLabel(gradeSystem)}
             </p>
           </div>
           <div className="flex gap-3">
@@ -326,13 +322,14 @@ export default function GradesPage() {
           <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
 
             {/* Header bảng */}
-            <div className="p-4 border-b bg-gray-50 flex items-center gap-3">
+            <div className="p-4 border-b bg-gray-50 flex items-center gap-3 flex-wrap">
               <span className="font-semibold text-gray-700">
                 {subjects.find(s => s.id === selectedSubject)?.name} —
                 Lớp {classes.find(c => c.id === selectedClass)?.name} —
                 HK{selectedSemester}
               </span>
-              <div className="flex gap-2 ml-auto">
+              {/* ✅ UPDATED: Dùng dynamic GRADE_TYPES */}
+              <div className="flex gap-2 ml-auto flex-wrap">
                 {Object.entries(GRADE_TYPES).map(([key, config]) => (
                   <span key={key} className={`text-xs px-2 py-1 rounded-lg font-medium ${config.color}`}>
                     {config.short}: hệ số {config.weight}
@@ -348,6 +345,7 @@ export default function GradesPage() {
                     <th className="text-left px-4 py-3 text-sm font-semibold text-gray-600 w-8">STT</th>
                     <th className="text-left px-4 py-3 text-sm font-semibold text-gray-600">Họ và tên</th>
                     <th className="text-left px-4 py-3 text-sm font-semibold text-gray-600 w-20">Mã HS</th>
+                    {/* ✅ UPDATED: Dynamic columns */}
                     {Object.entries(GRADE_TYPES).map(([key, config]) => (
                       <th key={key} className="text-center px-4 py-3 text-sm font-semibold text-gray-600 w-24">
                         <div>{config.label}</div>
@@ -375,7 +373,7 @@ export default function GradesPage() {
                           </span>
                         </td>
 
-                        {/* Ô điểm */}
+                        {/* ✅ UPDATED: Dynamic grade cells */}
                         {Object.entries(GRADE_TYPES).map(([type, config]) => {
                           const grade = getGrade(student.id, type)
                           const isEditing = editingCell?.studentId === student.id &&
@@ -450,15 +448,15 @@ export default function GradesPage() {
 
             {/* Footer thống kê */}
             <div className="p-4 border-t bg-gray-50">
-              <div className="flex gap-6 text-sm text-gray-600">
-                {['Giỏi', 'Khá', 'TB', 'Yếu'].map(rank => {
+              <div className="flex gap-6 text-sm text-gray-600 flex-wrap">
+                {['Giỏi', 'Khá', 'TB', 'Yếu'].map(rankLabel => {
                   const count = students.filter(s => {
                     const avg = calcAverage(s.id)
-                    return getRank(avg)?.label === rank
+                    return getRank(avg)?.label === rankLabel
                   }).length
                   return (
-                    <span key={rank}>
-                      <strong>{rank}:</strong> {count} học sinh
+                    <span key={rankLabel}>
+                      <strong>{rankLabel}:</strong> {count} học sinh
                     </span>
                   )
                 })}

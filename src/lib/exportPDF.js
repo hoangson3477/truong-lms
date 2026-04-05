@@ -9,47 +9,58 @@ function loadVietnameseFont(doc) {
   doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold')
 }
 
-export function exportGradePDF({ students, grades, className, subjectName, semester, academicYear }) {
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-
-  loadVietnameseFont(doc)
-  doc.setFont('NotoSans', 'normal')
-
-  const GRADE_TYPES = {
+// ✅ Helper: fallback GRADE_TYPES nếu không truyền vào
+function getDefaultGradeTypes() {
+  return {
     mieng:   { label: 'Miệng',    weight: 1 },
     tx:      { label: '15 phút',  weight: 1 },
     giua_ky: { label: 'Giữa kỳ', weight: 2 },
     cuoi_ky: { label: 'Cuối kỳ', weight: 3 },
   }
+}
+
+function getRank(avg) {
+  if (!avg) return '-'
+  const n = parseFloat(avg)
+  if (n >= 8.5) return 'Giỏi'
+  if (n >= 7.0) return 'Khá'
+  if (n >= 5.0) return 'Trung bình'
+  return 'Yếu'
+}
+
+function getRankColor(avg) {
+  if (!avg) return [150, 150, 150]
+  const n = parseFloat(avg)
+  if (n >= 8.5) return [22, 163, 74]
+  if (n >= 7.0) return [37, 99, 235]
+  if (n >= 5.0) return [234, 179, 8]
+  return [220, 38, 38]
+}
+
+
+// ═══════════════════════════════════════════════════════
+// XUẤT BẢNG ĐIỂM LỚP
+// ═══════════════════════════════════════════════════════
+export function exportGradePDF({ students, grades, gradeTypes, className, subjectName, semester, academicYear }) {
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+
+  loadVietnameseFont(doc)
+  doc.setFont('NotoSans', 'normal')
+
+  // ✅ Dùng gradeTypes động, fallback nếu không có
+  const GRADE_TYPES = gradeTypes || getDefaultGradeTypes()
+  const gradeEntries = Object.entries(GRADE_TYPES)
 
   const getGrade = (studentId, type) =>
     grades.find(g => g.student_id === studentId && g.grade_type === type)
 
   const calcAverage = (studentId) => {
     let totalScore = 0, totalWeight = 0
-    Object.entries(GRADE_TYPES).forEach(([type, config]) => {
+    gradeEntries.forEach(([type, config]) => {
       const grade = getGrade(studentId, type)
       if (grade) { totalScore += grade.score * config.weight; totalWeight += config.weight }
     })
     return totalWeight > 0 ? (totalScore / totalWeight).toFixed(1) : null
-  }
-
-  const getRank = (avg) => {
-    if (!avg) return '-'
-    const n = parseFloat(avg)
-    if (n >= 8.5) return 'Giỏi'
-    if (n >= 7.0) return 'Khá'
-    if (n >= 5.0) return 'Trung bình'
-    return 'Yếu'
-  }
-
-  const getRankColor = (avg) => {
-    if (!avg) return [150, 150, 150]
-    const n = parseFloat(avg)
-    if (n >= 8.5) return [22, 163, 74]
-    if (n >= 7.0) return [37, 99, 235]
-    if (n >= 5.0) return [234, 179, 8]
-    return [220, 38, 38]
   }
 
   // ─── HEADER ───────────────────────────────────────────
@@ -92,6 +103,13 @@ export function exportGradePDF({ students, grades, className, subjectName, semes
   doc.text(`Tổng số học sinh: ${students.length}`, 80, 52)
 
   // ─── TABLE ────────────────────────────────────────────
+  // ✅ Dynamic: tạo header và data dựa trên gradeEntries
+  const headRow = [
+    'STT', 'Họ và tên', 'Mã HS',
+    ...gradeEntries.map(([, config]) => `${config.label}\n(HS${config.weight})`),
+    'Điểm TB', 'Xếp loại'
+  ]
+
   const tableData = students.map((student, index) => {
     const avg = calcAverage(student.id)
     return {
@@ -99,10 +117,7 @@ export function exportGradePDF({ students, grades, className, subjectName, semes
         index + 1,
         student.profile?.full_name || '-',
         student.student_code || '-',
-        getGrade(student.id, 'mieng')?.score ?? '-',
-        getGrade(student.id, 'tx')?.score ?? '-',
-        getGrade(student.id, 'giua_ky')?.score ?? '-',
-        getGrade(student.id, 'cuoi_ky')?.score ?? '-',
+        ...gradeEntries.map(([type]) => getGrade(student.id, type)?.score ?? '-'),
         avg || '-',
         getRank(avg),
       ],
@@ -110,14 +125,31 @@ export function exportGradePDF({ students, grades, className, subjectName, semes
     }
   })
 
+  // ✅ Dynamic column widths
+  const numGradeCols = gradeEntries.length
+  const fixedColsWidth = 12 + 58 + 25 + 24 + 28 // STT + Tên + Mã + TB + XL = 147
+  const availableWidth = 277 - fixedColsWidth // ~130mm cho cột điểm
+  const gradeColWidth = Math.floor(availableWidth / numGradeCols)
+
+  const columnStyles = {
+    0: { cellWidth: 12, halign: 'center', textColor: [100, 116, 139] },
+    1: { cellWidth: 58 },
+    2: { cellWidth: 25, halign: 'center', fontStyle: 'bold', textColor: [37, 99, 235] },
+  }
+  // Grade columns
+  for (let i = 0; i < numGradeCols; i++) {
+    columnStyles[3 + i] = { cellWidth: gradeColWidth, halign: 'center' }
+  }
+  // TB + Xếp loại
+  columnStyles[3 + numGradeCols] = { cellWidth: 24, halign: 'center', fontStyle: 'bold' }
+  columnStyles[4 + numGradeCols] = { cellWidth: 28, halign: 'center', fontStyle: 'bold' }
+
+  const tbColIndex = 3 + numGradeCols
+  const xlColIndex = 4 + numGradeCols
+
   autoTable(doc, {
     startY: 64,
-    head: [[
-      'STT', 'Họ và tên', 'Mã HS',
-      'Miệng\n(HS1)', '15 phút\n(HS1)',
-      'Giữa kỳ\n(HS2)', 'Cuối kỳ\n(HS3)',
-      'Điểm TB', 'Xếp loại'
-    ]],
+    head: [headRow],
     body: tableData.map(d => d.row),
     styles: {
       fontSize: 9,
@@ -137,23 +169,13 @@ export function exportGradePDF({ students, grades, className, subjectName, semes
       font: 'NotoSans',
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
-    columnStyles: {
-      0: { cellWidth: 12, halign: 'center', textColor: [100, 116, 139] },
-      1: { cellWidth: 58 },
-      2: { cellWidth: 25, halign: 'center', fontStyle: 'bold', textColor: [37, 99, 235] },
-      3: { cellWidth: 22, halign: 'center' },
-      4: { cellWidth: 22, halign: 'center' },
-      5: { cellWidth: 24, halign: 'center' },
-      6: { cellWidth: 24, halign: 'center' },
-      7: { cellWidth: 24, halign: 'center', fontStyle: 'bold' },
-      8: { cellWidth: 28, halign: 'center', fontStyle: 'bold' },
-    },
+    columnStyles,
     didDrawCell: (data) => {
       if (data.section === 'body') {
         const { avg } = tableData[data.row.index]
-        if ((data.column.index === 7 || data.column.index === 8) && avg) {
+        if ((data.column.index === tbColIndex || data.column.index === xlColIndex) && avg) {
           const color = getRankColor(avg)
-          if (data.column.index === 8) {
+          if (data.column.index === xlColIndex) {
             doc.setFillColor(...color)
             doc.setGState(doc.GState({ opacity: 0.12 }))
             doc.roundedRect(data.cell.x + 1, data.cell.y + 1.5, data.cell.width - 2, data.cell.height - 3, 2, 2, 'F')
@@ -163,7 +185,7 @@ export function exportGradePDF({ students, grades, className, subjectName, semes
           doc.setFont('NotoSans', 'bold')
           doc.setFontSize(9)
           doc.text(
-            String(data.column.index === 7 ? avg : getRank(avg)),
+            String(data.column.index === tbColIndex ? avg : getRank(avg)),
             data.cell.x + data.cell.width / 2,
             data.cell.y + data.cell.height / 2 + 1,
             { align: 'center' }
@@ -236,43 +258,22 @@ export function exportGradePDF({ students, grades, className, subjectName, semes
 // ═══════════════════════════════════════════════════════
 // XUẤT BẢNG ĐIỂM CÁ NHÂN HỌC SINH
 // ═══════════════════════════════════════════════════════
-export function exportStudentGradePDF({ student, allGrades, className, academicYear }) {
+export function exportStudentGradePDF({ student, allGrades, gradeTypes, className, academicYear }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   loadVietnameseFont(doc)
   doc.setFont('NotoSans', 'normal')
 
-  const GRADE_TYPES = {
-    mieng:   { label: 'Miệng',    weight: 1 },
-    tx:      { label: '15 phút',  weight: 1 },
-    giua_ky: { label: 'Giữa kỳ', weight: 2 },
-    cuoi_ky: { label: 'Cuối kỳ', weight: 3 },
-  }
+  // ✅ Dùng gradeTypes động, fallback nếu không có
+  const GRADE_TYPES = gradeTypes || getDefaultGradeTypes()
+  const gradeEntries = Object.entries(GRADE_TYPES)
 
   const calcAverage = (grades) => {
     let totalScore = 0, totalWeight = 0
-    Object.entries(GRADE_TYPES).forEach(([type, config]) => {
+    gradeEntries.forEach(([type, config]) => {
       const g = grades.find(g => g.grade_type === type)
       if (g) { totalScore += g.score * config.weight; totalWeight += config.weight }
     })
     return totalWeight > 0 ? (totalScore / totalWeight).toFixed(1) : null
-  }
-
-  const getRank = (avg) => {
-    if (!avg) return '-'
-    const n = parseFloat(avg)
-    if (n >= 8.5) return 'Giỏi'
-    if (n >= 7.0) return 'Khá'
-    if (n >= 5.0) return 'Trung bình'
-    return 'Yếu'
-  }
-
-  const getRankColor = (avg) => {
-    if (!avg) return [150, 150, 150]
-    const n = parseFloat(avg)
-    if (n >= 8.5) return [22, 163, 74]
-    if (n >= 7.0) return [37, 99, 235]
-    if (n >= 5.0) return [234, 179, 8]
-    return [220, 38, 38]
   }
 
   // ─── HEADER ───────────────────────────────────────────
@@ -350,16 +351,20 @@ export function exportStudentGradePDF({ student, allGrades, className, academicY
     doc.text(`HỌC KỲ ${semester}`, 105, currentY + 6, { align: 'center' })
     currentY += 13
 
+    // ✅ Dynamic: tạo header và data dựa trên gradeEntries
+    const headRow = [
+      'STT', 'Môn học',
+      ...gradeEntries.map(([, config]) => config.label),
+      'Điểm TB', 'Xếp loại'
+    ]
+
     const tableData = subjectList.map(([subjectName, grades], idx) => {
       const avg = calcAverage(grades)
       return {
         row: [
           idx + 1,
           subjectName,
-          grades.find(g => g.grade_type === 'mieng')?.score ?? '-',
-          grades.find(g => g.grade_type === 'tx')?.score ?? '-',
-          grades.find(g => g.grade_type === 'giua_ky')?.score ?? '-',
-          grades.find(g => g.grade_type === 'cuoi_ky')?.score ?? '-',
+          ...gradeEntries.map(([type]) => grades.find(g => g.grade_type === type)?.score ?? '-'),
           avg || '-',
           getRank(avg),
         ],
@@ -367,9 +372,28 @@ export function exportStudentGradePDF({ student, allGrades, className, academicY
       }
     })
 
+    // ✅ Dynamic column widths cho portrait A4 (190mm usable)
+    const numGradeCols = gradeEntries.length
+    const fixedWidth = 12 + 55 + 22 + 21 // STT + Môn + TB + XL = 110
+    const gradeAvailable = 190 - fixedWidth // ~80mm
+    const gradeColW = Math.floor(gradeAvailable / numGradeCols)
+
+    const colStyles = {
+      0: { cellWidth: 12, halign: 'center', textColor: [100, 116, 139] },
+      1: { cellWidth: 55 },
+    }
+    for (let i = 0; i < numGradeCols; i++) {
+      colStyles[2 + i] = { cellWidth: gradeColW, halign: 'center' }
+    }
+    colStyles[2 + numGradeCols] = { cellWidth: 22, halign: 'center', fontStyle: 'bold' }
+    colStyles[3 + numGradeCols] = { cellWidth: 21, halign: 'center', fontStyle: 'bold' }
+
+    const tbIdx = 2 + numGradeCols
+    const xlIdx = 3 + numGradeCols
+
     autoTable(doc, {
       startY: currentY,
-      head: [['STT', 'Môn học', 'Miệng', '15 phút', 'Giữa kỳ', 'Cuối kỳ', 'Điểm TB', 'Xếp loại']],
+      head: [headRow],
       body: tableData.map(d => d.row),
       styles: {
         fontSize: 9,
@@ -388,22 +412,13 @@ export function exportStudentGradePDF({ student, allGrades, className, academicY
         fontSize: 9,
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
-      columnStyles: {
-        0: { cellWidth: 12, halign: 'center', textColor: [100, 116, 139] },
-        1: { cellWidth: 55 },
-        2: { cellWidth: 18, halign: 'center' },
-        3: { cellWidth: 18, halign: 'center' },
-        4: { cellWidth: 22, halign: 'center' },
-        5: { cellWidth: 22, halign: 'center' },
-        6: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
-        7: { cellWidth: 21, halign: 'center', fontStyle: 'bold' },
-      },
+      columnStyles: colStyles,
       didDrawCell: (data) => {
         if (data.section === 'body') {
           const { avg } = tableData[data.row.index]
-          if ((data.column.index === 6 || data.column.index === 7) && avg) {
+          if ((data.column.index === tbIdx || data.column.index === xlIdx) && avg) {
             const color = getRankColor(avg)
-            if (data.column.index === 7) {
+            if (data.column.index === xlIdx) {
               doc.setFillColor(...color)
               doc.setGState(doc.GState({ opacity: 0.12 }))
               doc.roundedRect(data.cell.x + 1, data.cell.y + 1, data.cell.width - 2, data.cell.height - 2, 1.5, 1.5, 'F')
@@ -413,7 +428,7 @@ export function exportStudentGradePDF({ student, allGrades, className, academicY
             doc.setFont('NotoSans', 'bold')
             doc.setFontSize(9)
             doc.text(
-              String(data.column.index === 6 ? avg : getRank(avg)),
+              String(data.column.index === tbIdx ? avg : getRank(avg)),
               data.cell.x + data.cell.width / 2,
               data.cell.y + data.cell.height / 2 + 1,
               { align: 'center' }
@@ -435,22 +450,18 @@ export function exportStudentGradePDF({ student, allGrades, className, academicY
       : null
 
     if (semAvgTotal) {
-      const color = getRankColor(semAvgTotal)
-      doc.setFillColor(...color)
-      doc.setGState(doc.GState({ opacity: 0.1 }))
+      doc.setFillColor(241, 245, 249)
       doc.roundedRect(10, currentY, 190, 10, 2, 2, 'F')
-      doc.setGState(doc.GState({ opacity: 1 }))
-      doc.setDrawColor(...color)
-      doc.setLineWidth(0.3)
-      doc.roundedRect(10, currentY, 190, 10, 2, 2, 'S')
-      doc.setTextColor(...color)
+      doc.setTextColor(51, 65, 85)
       doc.setFont('NotoSans', 'bold')
       doc.setFontSize(9)
-      doc.text(
-        `Điểm trung bình học kỳ ${semester}: ${semAvgTotal}  —  Xếp loại: ${getRank(semAvgTotal)}`,
-        105, currentY + 6.5, { align: 'center' }
-      )
-      currentY += 14
+      doc.text(`Điểm trung bình HK${semester}: `, 18, currentY + 7)
+      const semColor = getRankColor(semAvgTotal)
+      doc.setTextColor(...semColor)
+      doc.text(`${semAvgTotal} - ${getRank(semAvgTotal)}`, 68, currentY + 7)
+      currentY += 16
+    } else {
+      currentY += 8
     }
   }
 
@@ -463,5 +474,5 @@ export function exportStudentGradePDF({ student, allGrades, className, academicY
   doc.setFont('NotoSans', 'normal')
   doc.text('Trường LMS - Hệ thống quản lý trường học', 105, pageH - 3, { align: 'center' })
 
-  doc.save(`bang-diem-ca-nhan-${student.full_name}-${academicYear}.pdf`)
+  doc.save(`bang-diem-${student.full_name || 'hocsinh'}.pdf`)
 }
