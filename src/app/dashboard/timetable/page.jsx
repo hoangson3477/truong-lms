@@ -94,7 +94,7 @@ export default function TimetablePage() {
   }
 
   const fetchTimetable = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('timetable')
       .select(`
         *,
@@ -104,10 +104,11 @@ export default function TimetablePage() {
       .eq('class_id', selectedClass)
       .eq('semester', parseInt(selectedSemester))
 
-    // Filter theo school của user hiện tại
     if (profile?.school_id) {
-        query = query.eq('school_id', profile.school_id)
+      query = query.eq('school_id', profile.school_id)
     }
+
+    const { data } = await query
     setTimetable(data || [])
   }
 

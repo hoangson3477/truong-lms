@@ -30,22 +30,21 @@ export default function NotificationsPage() {
       const { data: profileData } = await supabase
         .from('profiles').select('*').eq('id', user.id).maybeSingle()
       setProfile(profileData)
-      await Promise.all([fetchNotifications(), fetchClasses()])
+      await Promise.all([fetchNotifications(profileData), fetchClasses()])
       setLoading(false)
     }
     getData()
   }, [])
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (profileData = profile) => {
     await new Promise(resolve => setTimeout(resolve, 300))
     let query = supabase
       .from('notifications')
       .select(`*, sender:profiles!notifications_sender_id_fkey(full_name, role)`)
       .order('created_at', { ascending: false })
 
-    // Super admin thấy tất cả, school_admin thấy của trường mình
-    if (profile?.school_id) {
-      query = query.eq('school_id', profile.school_id)
+    if (profileData?.school_id) {
+      query = query.eq('school_id', profileData.school_id)
     }
 
     const { data } = await query

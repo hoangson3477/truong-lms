@@ -111,7 +111,7 @@ export default function DashboardPage() {
       supabase.from('grades').select(`
         *, subject:subjects(name)
       `).eq('student_id', studentData.id).order('created_at', { ascending: false }).limit(6),
-      supabase.from('attendance').select('status').eq('student_id', studentData.id)
+      supabase.from('attendance').select('status, date').eq('student_id', studentData.id).order('date', { ascending: false })
     ])
 
     const presentCount = attendanceStats?.filter(a => a.status === 'present').length || 0

@@ -59,7 +59,7 @@ export default function AttendancePage() {
   }
 
   const fetchStudents = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('students')
       .select(`
         id, student_code,
@@ -68,11 +68,11 @@ export default function AttendancePage() {
       .eq('class_id', selectedClass)
       .order('student_code')
 
-    // Filter theo school của user hiện tại
     if (profile?.school_id) {
       query = query.eq('school_id', profile.school_id)
     }
 
+    const { data } = await query
     setStudents(data || [])
   }
 

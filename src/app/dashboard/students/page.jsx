@@ -27,94 +27,103 @@ export default function StudentsPage() {
       const { data: profileData } = await supabase
         .from('profiles').select('*').eq('id', user.id).maybeSingle()
       setProfile(profileData)
-      await Promise.all([fetchStudents(), fetchClasses()])
+      await Promise.all([fetchStudents(profileData), fetchClasses(profileData)])
       setLoading(false)
     }
     getData()
   }, [])
 
-  const fetchStudents = async () => {
+  // ✅ FIX: Nhận profileData làm tham số, dùng let query thay vì const + query undefined
+  const fetchStudents = async (profileData = profile) => {
     await new Promise(resolve => setTimeout(resolve, 500))
-    const { data, error } = await supabase
-        .from('students')
-        .select(`
+    let query = supabase
+      .from('students')
+      .select(`
         *,
         profile:profiles!students_profile_id_fkey(full_name, email),
         class:classes(name, grade)
-        `)
-        .order('student_code')
+      `)
+      .order('student_code')
 
-    // Filter theo school của user hiện tại
-    if (profile?.school_id) {
-      query = query.eq('school_id', profile.school_id)
+    // ✅ FIX: Dùng biến query đã khai báo ở trên
+    if (profileData?.school_id) {
+      query = query.eq('school_id', profileData.school_id)
     }
-    console.log('Students data:', data)
-    console.log('Students error:', error)
+
+    const { data } = await query
+    // ✅ FIX: Xóa console.log
     setStudents([...(data || [])])
-    }
+  }
 
-  const fetchClasses = async () => {
-    const { data } = await supabase
+  // ✅ FIX: Nhận profileData để filter theo school
+  const fetchClasses = async (profileData = profile) => {
+    let query = supabase
       .from('classes')
       .select('*')
       .order('grade')
+
+    if (profileData?.school_id) {
+      query = query.eq('school_id', profileData.school_id)
+    }
+
+    const { data } = await query
     setClasses(data || [])
   }
 
   const handleSubmit = async () => {
     if (!form.full_name || !form.email || !form.password || !form.student_code) {
-        return alert('Vui lòng điền đầy đủ thông tin bắt buộc!')
+      return alert('Vui lòng điền đầy đủ thông tin bắt buộc!')
     }
     setSaving(true)
 
     // Gọi API tạo user
     const res = await fetch('/api/create-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-          full_name: form.full_name,
-          role: 'student',
-          school_id: profile?.school_id, // ← thêm
-        })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: form.email,
+        password: form.password,
+        full_name: form.full_name,
+        role: 'student',
+        school_id: profile?.school_id,
+      })
     })
 
     const result = await res.json()
 
     if (result.error) {
-        alert('Lỗi tạo tài khoản: ' + result.error)
-        setSaving(false)
-        return
+      alert('Lỗi tạo tài khoản: ' + result.error)
+      setSaving(false)
+      return
     }
 
     // Tạo record student
     const { error: studentError } = await supabase.from('students').insert({
-        profile_id: result.user.id,
-        class_id: form.class_id || null,
-        student_code: form.student_code,
-        date_of_birth: form.date_of_birth || null,
-        address: form.address || null,
-        school_id: profile?.school_id,
+      profile_id: result.user.id,
+      class_id: form.class_id || null,
+      student_code: form.student_code,
+      date_of_birth: form.date_of_birth || null,
+      address: form.address || null,
+      school_id: profile?.school_id,
     })
 
     if (studentError) {
-        alert('Lỗi tạo học sinh: ' + studentError.message)
-        setSaving(false)
-        return
+      alert('Lỗi tạo học sinh: ' + studentError.message)
+      setSaving(false)
+      return
     }
 
     setShowModal(false)
     setForm({
-        full_name: '', email: '', password: '',
-        student_code: '', class_id: '',
-        date_of_birth: '', address: ''
+      full_name: '', email: '', password: '',
+      student_code: '', class_id: '',
+      date_of_birth: '', address: ''
     })
     setSaving(false)
-    
+
     // Reload lại trang để chắc chắn
     await fetchStudents()
-    }
+  }
 
   // Lọc học sinh
   const filtered = students.filter(s => {
@@ -138,7 +147,7 @@ export default function StudentsPage() {
             <h2 className="text-2xl font-bold text-gray-800">👨‍🎓 Quản lý học sinh</h2>
             <p className="text-gray-500 mt-1">Tổng cộng {students.length} học sinh</p>
           </div>
-          {profile?.role === 'admin' && (
+          {(profile?.role === 'admin' || profile?.role === 'school_admin') && (
             <button
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-blue-700 transition"

@@ -63,7 +63,7 @@ export default function GradesPage() {
   }
 
   const fetchStudents = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('students')
       .select(`
         id, student_code,
@@ -72,25 +72,27 @@ export default function GradesPage() {
       .eq('class_id', selectedClass)
       .order('student_code')
 
-    // Filter theo school của user hiện tại
     if (profile?.school_id) {
       query = query.eq('school_id', profile.school_id)
     }
+
+    const { data } = await query
     setStudents(data || [])
   }
 
   const fetchGrades = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('grades')
       .select('*')
       .eq('class_id', selectedClass)
       .eq('subject_id', selectedSubject)
       .eq('semester', parseInt(selectedSemester))
 
-    // Filter theo school của user hiện tại
     if (profile?.school_id) {
       query = query.eq('school_id', profile.school_id)
     }
+
+    const { data } = await query
     setGrades(data || [])
   }
 

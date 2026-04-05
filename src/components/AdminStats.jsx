@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 
-export default function AdminStats() {
+export default function AdminStats({ schoolId }) {
   const [stats, setStats] = useState(null)
   const supabase = createClient()
 
@@ -12,6 +12,26 @@ export default function AdminStats() {
   }, [])
 
   const loadStats = async () => {
+    // Base queries
+    let studentQ = supabase.from('students').select('*', { count: 'exact', head: true })
+    let teacherQ = supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher')
+    let classQ = supabase.from('classes').select('*', { count: 'exact', head: true })
+    let assignmentQ = supabase.from('assignments').select('*', { count: 'exact', head: true })
+    let recentStudentQ = supabase.from('students').select(`
+      student_code,
+      profile:profiles!students_profile_id_fkey(full_name),
+      class:classes(name)
+    `).order('created_at', { ascending: false }).limit(5)
+
+    // Filter theo school nếu có
+    if (schoolId) {
+      studentQ = studentQ.eq('school_id', schoolId)
+      teacherQ = teacherQ.eq('school_id', schoolId)
+      classQ = classQ.eq('school_id', schoolId)
+      assignmentQ = assignmentQ.eq('school_id', schoolId)
+      recentStudentQ = recentStudentQ.eq('school_id', schoolId)
+    }
+
     const [
       { count: studentCount },
       { count: teacherCount },
@@ -22,33 +42,15 @@ export default function AdminStats() {
       { data: gradeData },
       { data: recentStudents },
     ] = await Promise.all([
-      supabase.from('students').select('*', { count: 'exact', head: true }),
-      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
-      supabase.from('classes').select('*', { count: 'exact', head: true }),
+      studentQ,
+      teacherQ,
+      classQ,
       supabase.from('subjects').select('*', { count: 'exact', head: true }),
-      supabase.from('assignments').select('*', { count: 'exact', head: true }),
+      assignmentQ,
       supabase.from('attendance').select('status'),
       supabase.from('grades').select('score'),
-      supabase.from('students').select(`
-        student_code,
-        profile:profiles!students_profile_id_fkey(full_name),
-        class:classes(name)
-      `).order('created_at', { ascending: false }).limit(5),
+      recentStudentQ,
     ])
-
-    const totalAttendance = attendanceData?.length || 0
-    const presentCount = attendanceData?.filter(a => a.status === 'present').length || 0
-    const attendanceRate = totalAttendance > 0
-      ? Math.round((presentCount / totalAttendance) * 100) : 0
-
-    const avgScore = gradeData?.length > 0
-      ? (gradeData.reduce((sum, g) => sum + g.score, 0) / gradeData.length).toFixed(1)
-      : 0
-
-    setStats({
-      studentCount, teacherCount, classCount, subjectCount,
-      assignmentCount, attendanceRate, avgScore, recentStudents
-    })
   }
 
   if (!stats) return (
