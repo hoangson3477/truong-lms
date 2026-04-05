@@ -17,6 +17,18 @@ const menuItems = {
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
     { href: '/dashboard/chat', icon: '💬', label: 'Tin nhắn' },
   ],
+  school_admin: [
+    { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
+    { href: '/dashboard/classes', icon: '🏫', label: 'Lớp học' },
+    { href: '/dashboard/students', icon: '👨‍🎓', label: 'Học sinh' },
+    { href: '/dashboard/teachers', icon: '👨‍🏫', label: 'Giáo viên' },
+    { href: '/dashboard/subjects', icon: '📚', label: 'Môn học' },
+    { href: '/dashboard/timetable', icon: '📅', label: 'Thời khóa biểu' },
+    { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
+    { href: '/dashboard/grades', icon: '📊', label: 'Bảng điểm' },
+    { href: '/dashboard/attendance', icon: '✅', label: 'Điểm danh' },
+    { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
+  ],
   teacher: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
     { href: '/dashboard/timetable', icon: '📅', label: 'Thời khóa biểu' },

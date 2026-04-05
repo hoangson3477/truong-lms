@@ -38,13 +38,17 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async () => {
     await new Promise(resolve => setTimeout(resolve, 300))
-    const { data } = await supabase
+    let query = supabase
       .from('notifications')
-      .select(`
-        *,
-        sender:profiles!notifications_sender_id_fkey(full_name, role)
-      `)
+      .select(`*, sender:profiles!notifications_sender_id_fkey(full_name, role)`)
       .order('created_at', { ascending: false })
+
+    // Super admin thấy tất cả, school_admin thấy của trường mình
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
+
+    const { data } = await query
     setNotifications([...(data || [])])
   }
 
@@ -69,6 +73,7 @@ export default function NotificationsPage() {
       target_type: form.target_type,
       target_id: form.target_id || null,
       is_read: false,
+      school_id: profile?.school_id, // ← thêm
     })
 
     if (error) {

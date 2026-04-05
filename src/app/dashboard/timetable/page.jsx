@@ -74,9 +74,13 @@ export default function TimetablePage() {
   }, [selectedClass, selectedSemester])
 
   const fetchClasses = async () => {
-    const { data } = await supabase.from('classes').select('*').order('grade')
+    let query = supabase.from('classes').select('*').order('grade')
+    if (profile?.school_id) {
+        query = query.eq('school_id', profile.school_id)
+    }
+    const { data } = await query
     setClasses(data || [])
-  }
+    }
 
   const fetchSubjects = async () => {
     const { data } = await supabase.from('subjects').select('*').order('name')
@@ -99,6 +103,11 @@ export default function TimetablePage() {
       `)
       .eq('class_id', selectedClass)
       .eq('semester', parseInt(selectedSemester))
+
+    // Filter theo school của user hiện tại
+    if (profile?.school_id) {
+        query = query.eq('school_id', profile.school_id)
+    }
     setTimetable(data || [])
   }
 
@@ -147,7 +156,8 @@ export default function TimetablePage() {
         period: editCell.period,
         academic_year: academicYear,
         semester: parseInt(selectedSemester),
-      })
+        school_id: profile?.school_id, // ← thêm
+        })
     }
 
     await fetchTimetable()

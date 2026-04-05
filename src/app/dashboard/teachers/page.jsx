@@ -33,7 +33,7 @@ export default function TeachersPage() {
 
   const fetchTeachers = async () => {
     await new Promise(resolve => setTimeout(resolve, 300))
-    const { data } = await supabase
+    let query = supabase
       .from('profiles')
       .select(`
         *,
@@ -45,6 +45,12 @@ export default function TeachersPage() {
       `)
       .eq('role', 'teacher')
       .order('full_name')
+
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
+
+    const { data } = await query
     setTeachers([...(data || [])])
   }
 
@@ -71,7 +77,8 @@ export default function TeachersPage() {
         email: form.email,
         password: form.password,
         full_name: form.full_name,
-        role: 'teacher'
+        role: 'teacher',
+        school_id: profile?.school_id, // ← thêm
       })
     })
 

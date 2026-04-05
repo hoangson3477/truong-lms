@@ -49,7 +49,11 @@ export default function GradesPage() {
   }, [selectedClass, selectedSubject, selectedSemester])
 
   const fetchClasses = async () => {
-    const { data } = await supabase.from('classes').select('*').order('grade')
+    let query = supabase.from('classes').select('*').order('grade')
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
+    const { data } = await query
     setClasses(data || [])
   }
 
@@ -67,6 +71,11 @@ export default function GradesPage() {
       `)
       .eq('class_id', selectedClass)
       .order('student_code')
+
+    // Filter theo school của user hiện tại
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
     setStudents(data || [])
   }
 
@@ -77,6 +86,11 @@ export default function GradesPage() {
       .eq('class_id', selectedClass)
       .eq('subject_id', selectedSubject)
       .eq('semester', parseInt(selectedSemester))
+
+    // Filter theo school của user hiện tại
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
     setGrades(data || [])
   }
 
@@ -94,6 +108,7 @@ export default function GradesPage() {
       subjectName: subjects.find(s => s.id === selectedSubject)?.name || '',
       semester: selectedSemester,
       academicYear: classes.find(c => c.id === selectedClass)?.academic_year || '',
+      school_id: profile?.school_id,
     })
   }
 
@@ -112,6 +127,7 @@ export default function GradesPage() {
       allGrades: studentGrades || [],
       className: classes.find(c => c.id === selectedClass)?.name || '',
       academicYear: classes.find(c => c.id === selectedClass)?.academic_year || '',
+      school_id: profile?.school_id,
     })
   }
 
@@ -187,6 +203,7 @@ export default function GradesPage() {
         score,
         semester: parseInt(selectedSemester),
         academic_year: academicYear,
+        school_id: profile?.school_id, // ← thêm
       })
     }
 

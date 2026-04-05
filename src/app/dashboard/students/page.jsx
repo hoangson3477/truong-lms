@@ -17,7 +17,7 @@ export default function StudentsPage() {
   const [form, setForm] = useState({
     full_name: '', email: '', password: '',
     student_code: '', class_id: '',
-    date_of_birth: '', address: ''
+    date_of_birth: '', address: '',
   })
   const supabase = createClient()
 
@@ -43,6 +43,11 @@ export default function StudentsPage() {
         class:classes(name, grade)
         `)
         .order('student_code')
+
+    // Filter theo school của user hiện tại
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
     console.log('Students data:', data)
     console.log('Students error:', error)
     setStudents([...(data || [])])
@@ -67,10 +72,11 @@ export default function StudentsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-        email: form.email,
-        password: form.password,
-        full_name: form.full_name,
-        role: 'student'
+          email: form.email,
+          password: form.password,
+          full_name: form.full_name,
+          role: 'student',
+          school_id: profile?.school_id, // ← thêm
         })
     })
 
@@ -89,6 +95,7 @@ export default function StudentsPage() {
         student_code: form.student_code,
         date_of_birth: form.date_of_birth || null,
         address: form.address || null,
+        school_id: profile?.school_id,
     })
 
     if (studentError) {

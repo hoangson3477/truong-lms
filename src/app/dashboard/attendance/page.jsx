@@ -50,7 +50,11 @@ export default function AttendancePage() {
   }, [selectedClass, selectedDate])
 
   const fetchClasses = async () => {
-    const { data } = await supabase.from('classes').select('*').order('grade')
+    let query = supabase.from('classes').select('*').order('grade')
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
+    const { data } = await query
     setClasses(data || [])
   }
 
@@ -63,6 +67,12 @@ export default function AttendancePage() {
       `)
       .eq('class_id', selectedClass)
       .order('student_code')
+
+    // Filter theo school của user hiện tại
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
+
     setStudents(data || [])
   }
 
@@ -119,6 +129,7 @@ export default function AttendancePage() {
           date: selectedDate,
           status: record.status,
           note: record.note || null,
+          // attendance không cần school_id vì đã link qua student + class
         })
       }
     }

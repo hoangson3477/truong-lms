@@ -46,6 +46,11 @@ export default function LessonsPage() {
       `)
       .order('created_at', { ascending: false })
 
+    // Filter theo school của user hiện tại
+    if (profile?.school_id) {
+        query = query.eq('school_id', profile.school_id)
+    }
+
     if (profileData?.role === 'teacher') {
       query = query.eq('teacher_id', profileData.id)
     }
@@ -106,6 +111,7 @@ export default function LessonsPage() {
       teacher_id: profile.id,
       class_id: form.class_id || null,
       subject_id: form.subject_id || null,
+      school_id: profile?.school_id,
     })
 
     if (error) {

@@ -24,7 +24,8 @@ export default function DashboardPage() {
         .from('profiles').select('*').eq('id', user.id).maybeSingle()
       setProfile(profileData)
 
-      if (profileData?.role === 'admin') await loadAdminData()
+      if (profileData?.role === 'super_admin') await loadSuperAdminData()
+      if (profileData?.role === 'school_admin') await loadAdminData()
       if (profileData?.role === 'teacher') await loadTeacherData(profileData)
       if (profileData?.role === 'student') await loadStudentData(user.id)
       if (profileData?.role === 'parent') await loadParentData(user.id)
@@ -34,7 +35,26 @@ export default function DashboardPage() {
     getData()
   }, [])
 
+  const loadSuperAdminData = async () => {
+    const [
+      { count: schoolCount },
+      { count: studentCount },
+      { count: teacherCount },
+    ] = await Promise.all([
+      supabase.from('schools').select('*', { count: 'exact', head: true }),
+      supabase.from('students').select('*', { count: 'exact', head: true }),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
+    ])
+    setData({ schoolCount, studentCount, teacherCount })
+  }
+
   const loadAdminData = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: profileData } = await supabase
+      .from('profiles').select('*').eq('id', user.id).single()
+
+    const schoolId = profileData?.school_id
+
     const [
       { count: studentCount },
       { count: teacherCount },
@@ -42,11 +62,11 @@ export default function DashboardPage() {
       { count: subjectCount },
       { data: recentNotifs }
     ] = await Promise.all([
-      supabase.from('students').select('*', { count: 'exact', head: true }),
-      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
-      supabase.from('classes').select('*', { count: 'exact', head: true }),
+      supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_id', schoolId),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher').eq('school_id', schoolId),
+      supabase.from('classes').select('*', { count: 'exact', head: true }).eq('school_id', schoolId),
       supabase.from('subjects').select('*', { count: 'exact', head: true }),
-      supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(3)
+      supabase.from('notifications').select('*').eq('school_id', schoolId).order('created_at', { ascending: false }).limit(3)
     ])
     setData({ studentCount, teacherCount, classCount, subjectCount, recentNotifs })
   }
@@ -154,8 +174,87 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* ADMIN */}
-        {profile?.role === 'admin' && <AdminStats />}
+        {/* SUPER ADMIN */}
+        {profile?.role === 'super_admin' && (
+          <>
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <StatsCard icon="🏛️" label="Trường học" value={data.schoolCount ?? 0} color="blue" />
+              <StatsCard icon="👨‍🎓" label="Học sinh" value={data.studentCount ?? 0} color="green" />
+              <StatsCard icon="👨‍🏫" label="Giáo viên" value={data.teacherCount ?? 0} color="purple" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Link href="/dashboard/schools"
+                className="bg-white rounded-2xl border p-6 flex items-center gap-4 hover:shadow-md transition group">
+                <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-3xl shadow">🏛️</div>
+                <div>
+                  <p className="font-bold text-gray-800 group-hover:text-blue-600">Quản lý trường học</p>
+                  <p className="text-sm text-gray-400 mt-1">Tạo trường, cấp tài khoản nhà trường</p>
+                </div>
+              </Link>
+              <Link href="/dashboard/notifications"
+                className="bg-white rounded-2xl border p-6 flex items-center gap-4 hover:shadow-md transition group">
+                <div className="w-14 h-14 bg-red-500 rounded-2xl flex items-center justify-center text-3xl shadow">🔔</div>
+                <div>
+                  <p className="font-bold text-gray-800 group-hover:text-blue-600">Thông báo hệ thống</p>
+                  <p className="text-sm text-gray-400 mt-1">Gửi thông báo toàn nền tảng</p>
+                </div>
+              </Link>
+            </div>
+          </>
+        )}
+
+        {/* SCHOOL ADMIN */}
+        {profile?.role === 'school_admin' && (
+          <>
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">📊 Thống kê tổng quan</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <StatsCard icon="👨‍🎓" label="Học sinh" value={data.studentCount ?? 0} color="blue" />
+              <StatsCard icon="👨‍🏫" label="Giáo viên" value={data.teacherCount ?? 0} color="green" />
+              <StatsCard icon="🏫" label="Lớp học" value={data.classCount ?? 0} color="purple" />
+              <StatsCard icon="📚" label="Môn học" value={data.subjectCount ?? 0} color="orange" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">⚡ Truy cập nhanh</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { icon: '🏫', label: 'Lớp học', href: '/dashboard/classes', color: 'bg-blue-500' },
+                    { icon: '👨‍🎓', label: 'Học sinh', href: '/dashboard/students', color: 'bg-green-500' },
+                    { icon: '👨‍🏫', label: 'Giáo viên', href: '/dashboard/teachers', color: 'bg-purple-500' },
+                    { icon: '📊', label: 'Bảng điểm', href: '/dashboard/grades', color: 'bg-orange-500' },
+                    { icon: '✅', label: 'Điểm danh', href: '/dashboard/attendance', color: 'bg-teal-500' },
+                    { icon: '🔔', label: 'Thông báo', href: '/dashboard/notifications', color: 'bg-red-500' },
+                  ].map(item => (
+                    <Link key={item.href} href={item.href}
+                      className="bg-white rounded-2xl border p-4 flex items-center gap-3 hover:shadow-md transition group">
+                      <div className={`${item.color} w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow flex-shrink-0`}>
+                        {item.icon}
+                      </div>
+                      <span className="font-medium text-gray-700 text-sm group-hover:text-blue-600">{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">🔔 Thông báo gần đây</h3>
+                <div className="space-y-3">
+                  {!data.recentNotifs || data.recentNotifs?.length === 0 ? (
+                    <div className="bg-white rounded-2xl border p-6 text-center text-gray-400">Chưa có thông báo</div>
+                  ) : data.recentNotifs?.map(n => (
+                    <div key={n.id} className="bg-white rounded-2xl border p-4">
+                      <p className="font-medium text-gray-800 text-sm">{n.title}</p>
+                      <p className="text-gray-400 text-xs mt-1">
+                        {new Date(n.created_at).toLocaleDateString('vi-VN')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* TEACHER */}
         {profile?.role === 'teacher' && (

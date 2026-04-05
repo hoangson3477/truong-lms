@@ -44,6 +44,10 @@ export default function AssignmentsPage() {
         submissions(count)
       `)
       .order('created_at', { ascending: false })
+    
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
 
     // Giáo viên chỉ thấy bài của mình
     if (profileData?.role === 'teacher') {
@@ -76,6 +80,7 @@ export default function AssignmentsPage() {
       subject_id: form.subject_id,
       teacher_id: profile.id,
       due_date: form.due_date || null,
+      school_id: profile?.school_id,
     })
     if (error) {
       alert('Lỗi: ' + error.message)

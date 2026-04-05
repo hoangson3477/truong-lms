@@ -29,14 +29,20 @@ export default function ClassesPage() {
   }, [])
 
   const fetchClasses = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('classes')
       .select(`
         *,
-        homeroom_teacher:profiles(full_name),
+        homeroom_teacher:profiles!classes_homeroom_teacher_id_fkey(full_name),
         students(count)
       `)
       .order('grade', { ascending: true })
+
+    if (profile?.school_id) {
+      query = query.eq('school_id', profile.school_id)
+    }
+
+    const { data } = await query
     setClasses(data || [])
   }
 
@@ -47,6 +53,7 @@ export default function ClassesPage() {
       name: form.name,
       grade: parseInt(form.grade),
       academic_year: form.academic_year,
+      school_id: profile?.school_id, // ← thêm
     })
     if (error) {
       alert('Lỗi: ' + error.message)
