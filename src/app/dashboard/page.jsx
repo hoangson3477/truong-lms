@@ -123,7 +123,8 @@ export default function DashboardPage() {
   }
 
   const loadParentData = async (userId) => {
-    const { data: studentData } = await supabase
+    // ✅ Dùng .select() không có .single() để hỗ trợ nhiều con
+    const { data: childrenData } = await supabase
       .from('students')
       .select(`
         *,
@@ -131,10 +132,12 @@ export default function DashboardPage() {
         class:classes(name, grade, academic_year)
       `)
       .eq('parent_id', userId)
-      .single()
-
-    if (!studentData) return setData({ noChild: true })
-
+ 
+    if (!childrenData || childrenData.length === 0) return setData({ noChild: true })
+ 
+    // Lấy con đầu tiên làm "chính" (hiển thị chính trên dashboard)
+    const studentData = childrenData[0]
+ 
     const [
       { data: recentGrades },
       { data: attendanceStats },
@@ -145,14 +148,22 @@ export default function DashboardPage() {
       supabase.from('attendance').select('status, date').eq('student_id', studentData.id).order('date', { ascending: false }).limit(10),
       supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(3)
     ])
-
+ 
     const absentCount = attendanceStats?.filter(a => a.status === 'absent').length || 0
     const totalDays = attendanceStats?.length || 0
     const attendanceRate = totalDays > 0
       ? Math.round((attendanceStats?.filter(a => a.status === 'present').length / totalDays) * 100)
       : 100
-
-    setData({ studentData, recentGrades, attendanceStats, absentCount, attendanceRate, recentNotifs })
+ 
+    setData({
+      studentData,
+      children: childrenData,       // ✅ Truyền tất cả con
+      recentGrades,
+      attendanceStats,
+      absentCount,
+      attendanceRate,
+      recentNotifs
+    })
   }
 
   if (loading) return <LoadingPage />

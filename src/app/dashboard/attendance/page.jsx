@@ -110,30 +110,33 @@ export default function AttendancePage() {
   const handleSave = async () => {
     if (!selectedClass || !selectedDate) return alert('Vui lòng chọn lớp và ngày!')
     setSaving(true)
-
-    for (const student of students) {
-      const record = attendance[student.id]
-      if (!record?.status) continue
-
-      const existing = attendance[student.id]?.id
-
-      if (existing) {
-        await supabase.from('attendance').update({
-          status: record.status,
-          note: record.note || null,
-        }).eq('id', existing)
-      } else {
-        await supabase.from('attendance').insert({
+ 
+    const upsertData = students
+      .filter(student => attendance[student.id]?.status)
+      .map(student => {
+        const record = attendance[student.id]
+        return {
+          ...(record.id ? { id: record.id } : {}),
           student_id: student.id,
           class_id: selectedClass,
           date: selectedDate,
           status: record.status,
           note: record.note || null,
-          // attendance không cần school_id vì đã link qua student + class
-        })
+        }
+      })
+ 
+    if (upsertData.length > 0) {
+      const { error } = await supabase
+        .from('attendance')
+        .upsert(upsertData, { onConflict: 'student_id,class_id,date' })
+ 
+      if (error) {
+        alert('Lỗi lưu điểm danh: ' + error.message)
+        setSaving(false)
+        return
       }
     }
-
+ 
     await fetchAttendance()
     setSaving(false)
     setSaved(true)

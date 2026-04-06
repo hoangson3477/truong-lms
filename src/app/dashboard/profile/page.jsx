@@ -94,11 +94,15 @@ export default function ProfilePage() {
   }
 
   const roleLabel = {
-    admin: 'Quản trị viên', teacher: 'Giáo viên',
-    student: 'Học sinh', parent: 'Phụ huynh'
+    super_admin: 'Super Admin',
+    school_admin: 'Quản trị trường',
+    teacher: 'Giáo viên',
+    student: 'Học sinh',
+    parent: 'Phụ huynh',
   }
   const roleBg = {
-    admin: 'bg-purple-100 text-purple-700',
+    super_admin: 'bg-red-100 text-red-700',
+    school_admin: 'bg-indigo-100 text-indigo-700',
     teacher: 'bg-blue-100 text-blue-700',
     student: 'bg-green-100 text-green-700',
     parent: 'bg-orange-100 text-orange-700',
