@@ -27,6 +27,7 @@ const menuItems = {
     { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/grades', icon: '📊', label: 'Bảng điểm' },
     { href: '/dashboard/attendance', icon: '✅', label: 'Điểm danh' },
+    { href: '/dashboard/parents', icon: '👨‍👩‍👧', label: 'Phụ huynh' },  // ← THÊM DÒNG NÀY
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
   ],
   teacher: [
