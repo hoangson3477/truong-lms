@@ -43,6 +43,7 @@ const menuItems = {
   ],
   student: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
+    { href: '/dashboard/ai-learning', icon: '🚀', label: 'AI Learning' },
     { href: '/dashboard/timetable', icon: '📅', label: 'Thời khóa biểu' },
     { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/assignments', icon: '📝', label: 'Bài tập' },
