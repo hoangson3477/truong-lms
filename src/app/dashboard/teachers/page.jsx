@@ -121,7 +121,7 @@ export default function TeachersPage() {
             <h2 className="text-2xl font-bold text-gray-800">👨‍🏫 Quản lý giáo viên</h2>
             <p className="text-gray-500 mt-1">Tổng cộng {teachers.length} giáo viên</p>
           </div>
-          {profile?.role === 'admin' && (
+          {profile?.role === 'school_admin' && (
             <button
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-blue-700 transition"

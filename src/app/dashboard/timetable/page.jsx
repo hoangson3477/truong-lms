@@ -123,7 +123,7 @@ export default function TimetablePage() {
   }
 
   const handleCellClick = (day, period) => {
-    if (profile?.role !== 'admin') return
+    if (profile?.role !== 'school_admin') return
     if (!selectedClass) return alert('Vui lòng chọn lớp trước!')
     const existing = getCell(day, period)
     setEditCell({ day, period, existing })
@@ -196,7 +196,7 @@ export default function TimetablePage() {
           <div>
             <h2 className="text-2xl font-bold text-gray-800">📅 Thời khóa biểu</h2>
             <p className="text-gray-500 mt-1">
-              {profile?.role === 'admin' ? 'Click vào ô để thêm/sửa lịch' : 'Lịch học theo tuần'}
+              {profile?.role === 'school_admin' ? 'Click vào ô để thêm/sửa lịch' : 'Lịch học theo tuần'}
             </p>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function TimetablePage() {
           <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-16 text-center">
             <div className="text-5xl mb-4">📅</div>
             <p className="text-gray-500 text-lg">Chọn lớp để xem thời khóa biểu</p>
-            {profile?.role === 'admin' && (
+            {profile?.role === 'school_admin' && (
               <p className="text-gray-400 text-sm mt-2">Click vào ô trống để thêm lịch học</p>
             )}
           </div>
@@ -294,7 +294,7 @@ export default function TimetablePage() {
                           <td
                             key={day.value}
                             className={`border border-gray-200 px-2 py-2 text-center transition
-                              ${profile?.role === 'admin' ? 'cursor-pointer hover:bg-blue-50' : ''}`}
+                              ${profile?.role === 'school_admin' ? 'cursor-pointer hover:bg-blue-50' : ''}`}
                             onClick={() => handleCellClick(day.value, period)}
                           >
                             {cell ? (
@@ -308,7 +308,7 @@ export default function TimetablePage() {
                                 )}
                               </div>
                             ) : (
-                              profile?.role === 'admin' && (
+                              profile?.role === 'school_admin' && (
                                 <div className="text-gray-300 text-lg hover:text-blue-400 transition">＋</div>
                               )
                             )}
@@ -325,7 +325,7 @@ export default function TimetablePage() {
             <div className="p-4 border-t bg-gray-50 text-xs text-gray-400 flex gap-4">
               <span>• Tiết 1-5: Buổi sáng</span>
               <span>• Tiết 6-10: Buổi chiều</span>
-              {profile?.role === 'admin' && <span>• Click ô để thêm/sửa/xóa lịch</span>}
+              {profile?.role === 'school_admin' && <span>• Click ô để thêm/sửa/xóa lịch</span>}
             </div>
           </div>
         )}

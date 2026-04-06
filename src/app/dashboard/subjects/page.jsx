@@ -114,7 +114,7 @@ export default function SubjectsPage() {
             <h2 className="text-2xl font-bold text-gray-800">📚 Quản lý môn học</h2>
             <p className="text-gray-500 mt-1">Tổng cộng {subjects.length} môn học</p>
           </div>
-          {profile?.role === 'admin' && (
+          {profile?.role === 'school_admin' && (
             <button
               onClick={openAdd}
               className="bg-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-blue-700 transition"
@@ -137,7 +137,7 @@ export default function SubjectsPage() {
               <h3 className="font-bold text-lg leading-tight">{subject.name}</h3>
               <p className="text-xs font-mono opacity-60 mt-1">{subject.code}</p>
 
-              {profile?.role === 'admin' && (
+              {profile?.role === 'school_admin' && (
                 <div className="flex gap-2 mt-4">
                   <button
                     onClick={() => openEdit(subject)}

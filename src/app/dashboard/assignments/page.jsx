@@ -112,7 +112,7 @@ export default function AssignmentsPage() {
             <h2 className="text-2xl font-bold text-gray-800">📝 Bài tập</h2>
             <p className="text-gray-500 mt-1">Tổng cộng {assignments.length} bài tập</p>
           </div>
-          {(profile?.role === 'teacher' || profile?.role === 'admin') && (
+          {(profile?.role === 'teacher' || profile?.role === 'school_admin') && (
             <button
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-blue-700 transition"

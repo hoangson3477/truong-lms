@@ -51,8 +51,8 @@ export default function AssignmentDetailPage() {
         }
       }
 
-      // Nếu là giáo viên/admin, lấy tất cả submissions
-      if (profileData?.role === 'teacher' || profileData?.role === 'admin') {
+      // Nếu là giáo viên/school_admin, lấy tất cả submissions
+      if (profileData?.role === 'teacher' || profileData?.role === 'school_admin') {
         await fetchSubmissions()
       }
 
@@ -208,7 +208,7 @@ export default function AssignmentDetailPage() {
                 )}
               </div>
             </div>
-            {(profile?.role === 'teacher' || profile?.role === 'admin') && (
+            {(profile?.role === 'teacher' || profile?.role === 'school_admin') && (
               <div className="text-center ml-6">
                 <div className="text-3xl font-bold text-blue-600">{submissions.length}</div>
                 <div className="text-sm text-gray-400">đã nộp</div>
@@ -287,7 +287,7 @@ export default function AssignmentDetailPage() {
         )}
 
         {/* Giáo viên/Admin: Danh sách bài nộp */}
-        {(profile?.role === 'teacher' || profile?.role === 'admin') && (
+        {(profile?.role === 'teacher' || profile?.role === 'school_admin') && (
           <div className="bg-white rounded-2xl shadow-sm border">
             <div className="p-6 border-b">
               <h3 className="font-bold text-gray-800 text-lg">

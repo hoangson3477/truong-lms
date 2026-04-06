@@ -123,7 +123,7 @@ export default function NotificationsPage() {
             </h2>
             <p className="text-gray-500 mt-1">Tổng cộng {notifications.length} thông báo</p>
           </div>
-          {(profile?.role === 'admin' || profile?.role === 'teacher') && (
+          {(profile?.role === 'school_admin' || profile?.role === 'teacher') && (
             <button
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-blue-700 transition"
@@ -212,7 +212,7 @@ export default function NotificationsPage() {
                           ✓ Đánh dấu đọc
                         </button>
                       )}
-                      {(profile?.role === 'admin' || notif.sender_id === profile?.id) && (
+                      {(profile?.role === 'school_admin' || notif.sender_id === profile?.id) && (
                         <button
                           onClick={() => handleDelete(notif.id)}
                           className="px-3 py-2 bg-red-50 text-red-500 rounded-xl text-xs font-medium hover:bg-red-100 transition"

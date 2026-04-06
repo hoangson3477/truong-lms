@@ -232,7 +232,7 @@ export default function LessonDetailPage() {
           )}
           
           {/* Thống kê xem bài - chỉ giáo viên/admin */}
-            {(profile?.role === 'teacher' || profile?.role === 'admin') && viewStats && lesson.class_id && (
+            {(profile?.role === 'teacher' || profile?.role === 'school_admin') && viewStats && lesson.class_id && (
             <div className="bg-white rounded-2xl shadow-sm border mb-6">
                 <div className="p-6 border-b">
                 <h3 className="font-bold text-gray-800 text-lg">👁️ Thống kê xem bài giảng</h3>

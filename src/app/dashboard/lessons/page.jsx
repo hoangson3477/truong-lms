@@ -164,7 +164,7 @@ export default function LessonsPage() {
             <h2 className="text-2xl font-bold text-gray-800">📖 Bài giảng</h2>
             <p className="text-gray-500 mt-1">Tổng cộng {lessons.length} bài giảng</p>
           </div>
-          {(profile?.role === 'teacher' || profile?.role === 'admin') && (
+          {(profile?.role === 'teacher' || profile?.role === 'school_admin') && (
             <button
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-blue-700 transition"
@@ -281,7 +281,7 @@ export default function LessonsPage() {
                         👨‍🏫 {lesson.teacher?.full_name}
                       </span>
                       <div className="flex gap-2">
-                        {(profile?.role === 'admin' || lesson.teacher_id === profile?.id) && (
+                        {(profile?.role === 'school_admin' || lesson.teacher_id === profile?.id) && (
                           <button
                             onClick={() => handleDelete(lesson.id)}
                             className="text-red-400 text-xs hover:text-red-600"

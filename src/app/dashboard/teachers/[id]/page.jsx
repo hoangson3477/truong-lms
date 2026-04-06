@@ -132,7 +132,7 @@ export default function TeacherDetailPage() {
             <div className="bg-white rounded-2xl shadow-sm border">
               <div className="p-6 border-b flex justify-between items-center">
                 <h4 className="font-bold text-gray-800 text-lg">📚 Phân công dạy học</h4>
-                {profile?.role === 'admin' && (
+                {profile?.role === 'school_admin' && (
                   <button
                     onClick={() => setShowAssignModal(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition"
@@ -160,7 +160,7 @@ export default function TeacherDetailPage() {
                           <p className="text-sm text-gray-500">Lớp {tc.class?.name} — Khối {tc.class?.grade}</p>
                         </div>
                       </div>
-                      {profile?.role === 'admin' && (
+                      {profile?.role === 'school_admin' && (
                         <button
                           onClick={() => handleRemoveAssign(tc.id)}
                           className="text-red-400 hover:text-red-600 text-sm px-3 py-1 rounded-lg hover:bg-red-50 transition"

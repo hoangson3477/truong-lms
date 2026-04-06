@@ -6,14 +6,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const menuItems = {
-  admin: [
+  super_admin: [
     { href: '/dashboard', icon: '🏠', label: 'Tổng quan' },
-    { href: '/dashboard/classes', icon: '🏫', label: 'Lớp học' },
-    { href: '/dashboard/students', icon: '👨‍🎓', label: 'Học sinh' },
-    { href: '/dashboard/teachers', icon: '👨‍🏫', label: 'Giáo viên' },
-    { href: '/dashboard/subjects', icon: '📚', label: 'Môn học' },
-    { href: '/dashboard/timetable', icon: '📅', label: 'Thời khóa biểu' },
-    { href: '/dashboard/lessons', icon: '📖', label: 'Bài giảng' },
     { href: '/dashboard/notifications', icon: '🔔', label: 'Thông báo' },
     { href: '/dashboard/chat', icon: '💬', label: 'Tin nhắn' },
   ],
@@ -73,14 +67,15 @@ export default function Sidebar({ profile }) {
   }
 
   const roleLabel = {
-    admin: 'Quản trị viên',
+    super_admin: 'Super Admin',
+    school_admin: 'Quản trị trường',
     teacher: 'Giáo viên',
     student: 'Học sinh',
     parent: 'Phụ huynh',
   }
-
   const roleBg = {
-    admin: 'bg-purple-100 text-purple-700',
+    super_admin: 'bg-red-100 text-red-700',
+    school_admin: 'bg-indigo-100 text-indigo-700',
     teacher: 'bg-blue-100 text-blue-700',
     student: 'bg-green-100 text-green-700',
     parent: 'bg-orange-100 text-orange-700',
