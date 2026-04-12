@@ -116,12 +116,16 @@ export default function NewPlanPage() {
         prompt = `Tạo kế hoạch học tập chi tiết cho môn ${subjectLabel}, ${gradeLabel} theo chương trình giáo dục Việt Nam.
 Bao gồm các chương/bài chính trong chương trình, từ cơ bản đến nâng cao.
 ${selectedGrade === 'tuyen_sinh_10' ? 'Đây là chương trình ôn thi tuyển sinh vào lớp 10, tập trung vào kiến thức trọng tâm và dạng bài thi thường gặp.' : ''}
-${customTopic ? `Tập trung vào chủ đề: ${customTopic}` : ''}`
+${customTopic ? `Tập trung vào chủ đề: ${customTopic}` : ''}
+
+ĐẶC BIỆT: Với mỗi unit, hãy tạo một SƠ ĐỒ TƯ DUY (mind map) dưới dạng JSON với cấu trúc nodes có id, label và children để học sinh dễ hình dung mối quan hệ kiến thức.`
       } else {
         prompt = `Tạo kế hoạch học tập dựa trên tài liệu được upload cho môn ${subjectLabel}, ${gradeLabel}.
 Tên các file: ${uploadedMaterials.map(m => m.file_name).join(', ')}
 ${customTopic ? `Chủ đề bổ sung: ${customTopic}` : ''}
-Hãy tạo lộ trình học phù hợp với nội dung tài liệu.`
+Hãy tạo lộ trình học phù hợp với nội dung tài liệu.
+
+ĐẶC BIỆT: Với mỗi unit, hãy tạo một SƠ ĐỒ TƯ DUY (mind map) dưới dạng JSON với cấu trúc nodes có id, label và children để học sinh dễ hình dung mối quan hệ kiến thức.`
       }
 
       const res = await fetch('/api/ai/generate', {

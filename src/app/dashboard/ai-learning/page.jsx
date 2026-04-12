@@ -22,6 +22,7 @@ export default function AILearningPage() {
   const [student, setStudent] = useState(null)
   const [stats, setStats] = useState(null)
   const [plans, setPlans] = useState([])
+  const [analytics, setAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
@@ -134,7 +135,7 @@ export default function AILearningPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
             { href: '/dashboard/ai-learning/new-plan', icon: '🎯', label: 'Tạo kế hoạch mới', desc: 'Chọn môn & lộ trình', color: 'bg-blue-500' },
-            { href: '/dashboard/ai-learning/tutor', icon: '🤖', label: 'Gia sư AI', desc: 'Hỏi bài, giải thích', color: 'bg-green-500' },
+            { href: '/dashboard/ai-learning/chat', icon: '🤖', label: 'Gia sư AI', desc: 'Hỏi bài, giải thích', color: 'bg-green-500' }, // ← THÊM
             { href: '/dashboard/ai-learning/flashcards', icon: '🃏', label: 'Flashcard', desc: 'Ôn tập thẻ ghi nhớ', color: 'bg-purple-500' },
             { href: '/dashboard/ai-learning/quiz', icon: '❓', label: 'Kiểm tra', desc: 'Làm quiz & bài tập', color: 'bg-orange-500' },
           ].map(action => (

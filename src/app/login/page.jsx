@@ -167,7 +167,7 @@ export default function LoginPage() {
               <p className="text-xs text-gray-400 text-center mb-3">Tài khoản demo</p>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { role: 'Admin', color: 'bg-purple-50 text-purple-700' },
+                  { role: 'Quản trị nhà trường', color: 'bg-purple-50 text-purple-700' },
                   { role: 'Giáo viên', color: 'bg-blue-50 text-blue-700' },
                   { role: 'Học sinh', color: 'bg-green-50 text-green-700' },
                   { role: 'Phụ huynh', color: 'bg-orange-50 text-orange-700' },

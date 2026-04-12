@@ -13,9 +13,8 @@ const supabaseAdmin = createClient(
 
 // Các role được phép tạo user, và role nào họ được tạo
 const ALLOWED_CREATORS = {
-  super_admin: ['school_admin', 'admin', 'teacher', 'student', 'parent'],
-  school_admin: ['admin', 'teacher', 'student', 'parent'],
-  admin: ['teacher', 'student', 'parent'],
+  super_admin: ['school_admin', 'teacher', 'student', 'parent'],
+  school_admin: ['teacher', 'student', 'parent'],
 }
 
 export async function POST(request) {
@@ -61,7 +60,7 @@ export async function POST(request) {
     }
 
     // ✅ school_admin/admin chỉ được tạo user trong trường của mình
-    if (['school_admin', 'admin'].includes(callerProfile.role) && school_id && school_id !== callerProfile.school_id) {
+    if (['school_admin'].includes(callerProfile.role) && school_id && school_id !== callerProfile.school_id) {
       return NextResponse.json({ error: 'Bạn chỉ được tạo tài khoản trong trường của mình!' }, { status: 403 })
     }
 

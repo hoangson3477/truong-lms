@@ -1,0 +1,1 @@
+- [Observations on AI Learning Component](memory/ai-learning-analysis.md) - Analysis of AI learning features and potential improvements

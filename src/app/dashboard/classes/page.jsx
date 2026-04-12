@@ -85,7 +85,7 @@ export default function ClassesPage() {
             <h2 className="text-2xl font-bold text-gray-800">🏫 Quản lý lớp học</h2>
             <p className="text-gray-500 mt-1">Tổng cộng {classes.length} lớp</p>
           </div>
-          {profile?.role === 'admin' && (
+          {profile?.role === 'school_admin' && (
             <button
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-blue-700 transition flex items-center gap-2"

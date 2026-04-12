@@ -24,7 +24,7 @@ export default function ChatPage() {
         .from('profiles').select('*').eq('id', user.id).single()
       setProfile(profileData)
       await fetchRooms(profileData)
-      if (profileData.role === 'teacher' || profileData.role === 'admin') {
+      if (profileData.role === 'teacher' || profileData.role === 'school_admin') {
         await fetchStudents()
       }
       if (profileData.role === 'parent' || profileData.role === 'student') {
@@ -176,14 +176,14 @@ export default function ChatPage() {
   }
 
   const getRoomName = (room) => {
-    if (profile?.role === 'teacher' || profile?.role === 'admin') {
+    if (profile?.role === 'teacher' || profile?.role === 'school_admin') {
       return `${room.student?.profile?.full_name} (${room.parent?.full_name || 'PH'})`
     }
     return room.teacher?.full_name || 'Giáo viên'
   }
 
   const getRoomSub = (room) => {
-    if (profile?.role === 'teacher' || profile?.role === 'admin') {
+    if (profile?.role === 'teacher' || profile?.role === 'school_admin') {
       return `HS: ${room.student?.student_code}`
     }
     return `Liên hệ về ${room.student?.profile?.full_name}`
@@ -205,7 +205,7 @@ export default function ChatPage() {
         <div className="w-80 bg-white border-r flex flex-col">
           <div className="p-5 border-b flex justify-between items-center">
             <h2 className="font-bold text-gray-800 text-lg">💬 Tin nhắn</h2>
-            {(profile?.role === 'teacher' || profile?.role === 'admin') && (
+            {(profile?.role === 'teacher' || profile?.role === 'school_admin') && (
               <button
                 onClick={() => setShowNewChat(!showNewChat)}
                 className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center hover:bg-blue-700 transition text-lg"
@@ -242,7 +242,7 @@ export default function ChatPage() {
               <div className="p-8 text-center text-gray-400">
                 <div className="text-4xl mb-2">💬</div>
                 <p className="text-sm">Chưa có cuộc trò chuyện nào</p>
-                {(profile?.role === 'teacher' || profile?.role === 'admin') && (
+                {(profile?.role === 'teacher' || profile?.role === 'school_admin') && (
                   <p className="text-xs mt-1">Nhấn ＋ để bắt đầu</p>
                 )}
               </div>

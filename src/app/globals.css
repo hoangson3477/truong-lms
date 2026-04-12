@@ -42,3 +42,21 @@ textarea:focus,
 select:focus {
   color: #111827 !important;
 }
+
+/* Thêm vào src/app/globals.css */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
