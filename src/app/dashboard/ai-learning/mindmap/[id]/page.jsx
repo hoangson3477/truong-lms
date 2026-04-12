@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar'
 import LoadingPage from '@/components/Skeleton'
 import Link from 'next/link'
 import { MindMap } from '@/components/MindMap'
+import { toast } from 'sonner'
 import { exportMindMapAsPNG, exportMindMapAsSVG } from '@/lib/mindmapUtils'
 
 export default function MindMapViewerPage() {
@@ -17,6 +18,7 @@ export default function MindMapViewerPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [generating, setGenerating] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const { id } = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -106,19 +108,29 @@ export default function MindMapViewerPage() {
 
   const handleExportPNG = async () => {
     if (!mindMapData) return
+    setExporting(true)
     try {
       await exportMindMapAsPNG(mindMapData, `${plan?.title || 'mindmap'}.png`)
+      toast.success('Đã xuất PNG')
     } catch (err) {
-      alert('Lỗi xuất PNG: ' + err.message)
+      toast.error('Lỗi xuất PNG: ' + err.message)
+      console.error(err)
+    } finally {
+      setExporting(false)
     }
   }
 
   const handleExportSVG = async () => {
     if (!mindMapData) return
+    setExporting(true)
     try {
       await exportMindMapAsSVG(mindMapData, `${plan?.title || 'mindmap'}.svg`)
+      toast.success('Đã xuất SVG')
     } catch (err) {
-      alert('Lỗi xuất SVG: ' + err.message)
+      toast.error('Lỗi xuất SVG: ' + err.message)
+      console.error(err)
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -177,17 +189,19 @@ export default function MindMapViewerPage() {
                 <>
                   <button
                     onClick={handleExportPNG}
-                    className="p-2 bg-blue-100 rounded hover:bg-blue-200"
+                    disabled={exporting || generating}
+                    className={`p-2 rounded ${exporting || generating ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
                     title="Xuất PNG"
                   >
-                    📥 PNG
+                    {exporting ? '⏳' : '📥'} PNG
                   </button>
                   <button
                     onClick={handleExportSVG}
-                    className="p-2 bg-blue-100 rounded hover:bg-blue-200"
+                    disabled={exporting || generating}
+                    className={`p-2 rounded ${exporting || generating ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
                     title="Xuất SVG"
                   >
-                    📥 SVG
+                    {exporting ? '⏳' : '📥'} SVG
                   </button>
                 </>
               ) : (

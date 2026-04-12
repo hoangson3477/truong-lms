@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 /**
  * MindMap Component
@@ -8,8 +8,22 @@ import { useState } from 'react'
  * Support: multiple levels, expand/collapse, hover effects
  */
 
-export function MindMap({ data, width = 800, height = 600 }) {
-  const [expandedNodes, setExpandedNodes] = useState(new Set([data.nodes?.[0]?.id]))
+export function MindMap({ data, width, height }) {
+  const containerRef = useRef(null)
+  const [containerSize, setContainerSize] = useState({ width: width || 1000, height: height || 800 })
+  const [expandedNodes, setExpandedNodes] = useState(new Set([data?.nodes?.[0]?.id]))
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const el = containerRef.current
+    function update() {
+      setContainerSize({ width: el.clientWidth || (width || 1000), height: el.clientHeight || (height || 800) })
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [containerRef, width, height, data])
 
   if (!data || !data.nodes || data.nodes.length === 0) {
     return (
@@ -30,10 +44,10 @@ export function MindMap({ data, width = 800, height = 600 }) {
   }
 
   // Tính toán tọa độ cho từng node
-  const layout = calculateLayout(data.nodes, width, height)
+  const layout = calculateLayout(data.nodes, containerSize.width, containerSize.height)
 
   return (
-    <div className="relative w-full h-full overflow-auto p-8" style={{ minWidth: '600px' }}>
+    <div ref={containerRef} className="relative w-full h-full overflow-auto p-8">
       {/* Node连线 - dùng SVG để vẽ đường nối */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
         {layout.edges.map((edge, i) => (
