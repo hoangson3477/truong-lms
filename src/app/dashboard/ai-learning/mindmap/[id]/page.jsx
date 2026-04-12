@@ -19,6 +19,8 @@ export default function MindMapViewerPage() {
   const [error, setError] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [savedMaps, setSavedMaps] = useState([])
   const { id } = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -72,6 +74,21 @@ export default function MindMapViewerPage() {
 
     loadData()
   }, [id])
+
+  useEffect(() => {
+    const loadSavedMaps = async () => {
+      if (!plan) return
+      try {
+        const { data, error } = await supabase.from('mind_maps').select('*').eq('plan_id', plan.id).order('created_at', { ascending: false })
+        if (error) throw error
+        setSavedMaps(data || [])
+      } catch (err) {
+        console.error('Load saved maps', err)
+      }
+    }
+
+    loadSavedMaps()
+  }, [plan, id])
 
   const handleRegenerate = async () => {
     if (!plan) return
@@ -134,6 +151,42 @@ export default function MindMapViewerPage() {
     }
   }
 
+  const handleSaveMindMap = async () => {
+    if (!mindMapData) return
+    setSaving(true)
+    try {
+        const payload = {
+        student_id: student?.id || null,
+        plan_id: plan?.id || id,
+        title: `${plan?.title || 'mindmap'} - ${new Date().toLocaleString()}`,
+        subject: plan?.subject || null,
+        map_data: mindMapData
+      }
+      const { data, error } = await supabase.from('mind_maps').insert([payload]).select('*')
+      if (error) throw error
+      toast.success('Đã lưu sơ đồ')
+      setSavedMaps(prev => [data[0], ...prev])
+    } catch (err) {
+      console.error(err)
+      toast.error('Lỗi lưu sơ đồ: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteMap = async (mapId) => {
+    if (!mapId) return
+    try {
+      const { data, error } = await supabase.from('mind_maps').delete().eq('id', mapId).select('*')
+      if (error) throw error
+      setSavedMaps(prev => prev.filter(m => m.id !== mapId))
+      toast.success('Đã xóa sơ đồ')
+    } catch (err) {
+      console.error(err)
+      toast.error('Lỗi xóa sơ đồ: ' + err.message)
+    }
+  }
+
   if (loading) return <LoadingPage />
   if (error) return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -189,19 +242,26 @@ export default function MindMapViewerPage() {
                 <>
                   <button
                     onClick={handleExportPNG}
-                    disabled={exporting || generating}
-                    className={`p-2 rounded ${exporting || generating ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
+                    disabled={exporting || generating || saving}
+                    className={`p-2 rounded ${exporting || generating || saving ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
                     title="Xuất PNG"
                   >
                     {exporting ? '⏳' : '📥'} PNG
                   </button>
                   <button
                     onClick={handleExportSVG}
-                    disabled={exporting || generating}
-                    className={`p-2 rounded ${exporting || generating ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
+                    disabled={exporting || generating || saving}
+                    className={`p-2 rounded ${exporting || generating || saving ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
                     title="Xuất SVG"
                   >
                     {exporting ? '⏳' : '📥'} SVG
+                  </button>
+                  <button
+                    onClick={handleSaveMindMap}
+                    disabled={saving || generating || exporting}
+                    className={`px-4 py-2 ml-2 rounded ${saving ? 'bg-gray-200 text-gray-400' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                  >
+                    {saving ? '⏳ Đang lưu...' : '💾 Lưu sơ đồ'}
                   </button>
                 </>
               ) : (
@@ -212,9 +272,37 @@ export default function MindMapViewerPage() {
 
           {/* Mind Map Display */}
           <div className="bg-white rounded-2xl border p-6 min-h-[600px]">
+            {/* Saved maps */}
+            {savedMaps && savedMaps.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">Sơ đồ đã lưu:</p>
+                <div className="flex flex-wrap gap-2">
+                  {savedMaps.map((m) => (
+                    <div key={m.id} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
+                      <button
+                        className="text-left text-sm text-blue-600 hover:underline"
+                        onClick={() => {
+                          setMindMapData(m.map_data)
+                          toast.success('Đã load sơ đồ đã lưu')
+                        }}
+                      >
+                        {m.title}
+                      </button>
+                      <button
+                        className="text-xs text-red-600 hover:underline"
+                        onClick={() => handleDeleteMap(m.id)}
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {mindMapData ? (
               <div className="relative w-full h-full">
-                <MindMap data={mindMapData} width={1000} height={800} />
+                <MindMap data={mindMapData} />
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12">

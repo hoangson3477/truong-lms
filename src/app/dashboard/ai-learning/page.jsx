@@ -186,10 +186,12 @@ export default function AILearningPage() {
                   : 0
 
                 return (
-                  <Link
+                  <div
                     key={plan.id}
-                    href={`/dashboard/ai-learning/plan/${plan.id}`}
-                    className="bg-white rounded-2xl border hover:shadow-lg transition overflow-hidden group"
+                    onClick={() => router.push(`/dashboard/ai-learning/plan/${plan.id}`)}
+                    role="button"
+                    tabIndex={0}
+                    className="bg-white rounded-2xl border hover:shadow-lg transition overflow-hidden group cursor-pointer"
                   >
                     {/* Color bar top */}
                     <div className={`h-2 bg-gradient-to-r ${SUBJECT_CONFIG[plan.subject]?.color || 'from-gray-400 to-gray-500'}`} />
@@ -238,12 +240,58 @@ export default function AILearningPage() {
                           {plan.status === 'active' ? '🟢 Đang học' :
                            plan.status === 'completed' ? '✅ Hoàn thành' : '⏸️ Tạm dừng'}
                         </span>
-                        <span className="text-xs text-gray-300">
-                          {new Date(plan.updated_at).toLocaleDateString('vi-VN')}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-gray-300">
+                            {new Date(plan.updated_at).toLocaleDateString('vi-VN')}
+                          </span>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              try {
+                                // Check if a saved mindmap exists for this plan
+                                const { data: existing } = await supabase.from('mind_maps').select('id').eq('plan_id', plan.id).limit(1)
+                                if (existing && existing.length > 0) {
+                                  router.push(`/dashboard/ai-learning/mindmap/${plan.id}`)
+                                  return
+                                }
+
+                                // No existing map: generate via AI and save
+                                const prompt = `Tạo sơ đồ tư duy chi tiết cho kế hoạch học tập "${plan.title}" môn ${plan.subject} lớp ${plan.grade_level}. Mỗi nhánh chính là một unit/chương, mỗi nhánh phụ là các kiến thức con trong unit đó.`
+                                const res = await fetch('/api/ai/generate', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ prompt, type: 'mind_map' })
+                                })
+                                const json = await res.json()
+                                if (json.error) throw new Error(json.error)
+                                const result = json.result
+
+                                // Save to supabase
+                                const payload = {
+                                  student_id: student?.id || null,
+                                  plan_id: plan.id,
+                                  title: `${plan.title} - Sơ đồ tư duy`,
+                                  subject: plan.subject || null,
+                                  map_data: result
+                                }
+                                const { data, error } = await supabase.from('mind_maps').insert([payload]).select('*')
+                                if (error) throw error
+                                // Navigate to mindmap viewer
+                                router.push(`/dashboard/ai-learning/mindmap/${plan.id}`)
+                              } catch (err) {
+                                console.error('Open/create mindmap', err)
+                                // best effort: go to page so user can try manually
+                                router.push(`/dashboard/ai-learning/mindmap/${plan.id}`)
+                              }
+                            }}
+                            className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded ml-2 hover:bg-indigo-100"
+                          >
+                            🗺️ Sơ đồ tư duy
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
